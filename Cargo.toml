@@ -1,0 +1,9 @@
+[package]
+name = "fent_ecs"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Revilo126"]
+
+[dependencies]
+fent_derive = { path = "fent_derive" }
