@@ -6,4 +6,11 @@ license = "MIT"
 authors = ["Revilo126"]
 
 [dependencies]
+# Internal
 fent_derive = { path = "fent_derive" }
+
+# External
+log = "0.4.33"
+
+[dev-dependencies]
+env_logger = "0.11.11"
