@@ -1,1 +1,10 @@
+# .gitignore for Fent ECS
+
+# Folders
+
 /target
+/fent_derive/target
+
+# Files 
+.*
+!/.gitignore

@@ -10,9 +10,8 @@ pub mod system;
 
 #[cfg(test)]
 mod test {
-    // Entity Tests
+    use crate::{component::identification::component_id, entity::Entities};
 
-    use crate::entity::Entities;
     #[test]
     fn entity_bulk_alloc_free() {
         let mut entities = Entities::default();
@@ -29,5 +28,19 @@ mod test {
             entities.free(id);
             assert!(!entities.in_use[id]);
         }
+    }
+
+    #[test]
+    fn component_type() {
+        struct Obj1;
+        struct Obj2;
+
+        let i = component_id::<Obj1>();
+        assert_eq!(i, 0);
+        let j = component_id::<Obj2>();
+        assert_eq!(j, 1);
+
+        let i = component_id::<Obj1>();
+        assert_eq!(i, 0);
     }
 }

@@ -2,13 +2,17 @@
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use crate::entity::{Entities, Entity};
+use crate::{
+    component::storage::ComponentStorages,
+    entity::{Entities, Entity},
+};
 
-// The World Struct
+/// The World Struct
 pub struct World {
-    // To be able to identify worlds within mass storages
-    id: WorldId,
+    /// To be able to identify a [`World`] within mass storages
+    pub(crate) id: WorldId,
     pub(crate) entities: Entities,
+    pub(crate) components: ComponentStorages,
 }
 
 impl Default for World {
@@ -18,6 +22,7 @@ impl Default for World {
             id: WorldId::new()
                 .expect("How in the actual fuck did you overflow the world counter?!"),
             entities: Entities::default(),
+            components: ComponentStorages::default(),
         }
     }
 }
@@ -42,12 +47,14 @@ impl World {
     }
 
     /// Spawn a new [`Entity`]
+    #[inline]
     pub fn spawn(&mut self) -> Entity {
         self.entities.alloc()
     }
 
-    /// Frees/Kills the provided [`Entity`]
-    pub fn free(&mut self, e: Entity) {
+    /// Despawn the provided [`Entity`]
+    #[inline]
+    pub fn despawn(&mut self, e: Entity) {
         self.entities.free(e);
     }
 }
@@ -61,6 +68,7 @@ static NEXT_WORLD_ID: AtomicUsize = AtomicUsize::new(0);
 
 impl WorldId {
     /// Return's the next avaliable [`WorldId`]
+    #[inline]
     pub fn new() -> Option<Self> {
         NEXT_WORLD_ID
             .try_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
