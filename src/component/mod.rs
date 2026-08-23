@@ -1,9 +1,10 @@
 //! Components are objects stored in conjunction with entities,
 //! providing data on said entities.
 
-use crate::component::storage::ComponentStorage;
+use crate::{component::storage::ComponentStorage, world::World};
 
 pub mod identification;
+pub mod resource;
 pub mod storage;
 
 // Component trait
@@ -28,4 +29,4 @@ pub trait Component: Send + Sync + Sized + 'static {
 }
 
 // Not working now
-type ComponentAction = fn();
+type ComponentAction = fn(&mut World);

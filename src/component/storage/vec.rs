@@ -37,3 +37,12 @@ impl<T: Component> ComponentStorage for VecStorage<T> {
         self.values.get_mut(entity).and_then(Option::take)
     }
 }
+
+impl<T: Component> Default for VecStorage<T> {
+    fn default() -> Self {
+        Self {
+            values: Vec::new(),
+            _marker: PhantomData,
+        }
+    }
+}

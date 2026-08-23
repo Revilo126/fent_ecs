@@ -10,7 +10,8 @@ authors = ["Revilo126"]
 fent_derive = { path = "fent_derive" }
 
 # External
-log = "0.4.33"
+log = "0.4.34"
 
-[dev-dependencies]
-env_logger = "0.11.11"
+[[test]]
+name = "integration"
+path = "tests/lib.rs"

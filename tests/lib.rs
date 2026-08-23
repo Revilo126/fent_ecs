@@ -1,0 +1,67 @@
+#[cfg(test)]
+mod test {
+    use fent_derive::{Component, Resource};
+    use fent_ecs::{component::identification::component_id, world::World};
+
+    #[test]
+    fn component_ids() {
+        struct Obj1;
+        struct Obj2;
+
+        let i = component_id::<Obj1>();
+        assert_eq!(i, 0);
+        let j = component_id::<Obj2>();
+        assert_eq!(j, 1);
+
+        let i = component_id::<Obj1>();
+        assert_eq!(i, 0);
+    }
+
+    #[test]
+    fn component_storage() {
+        #[derive(Component)]
+        pub struct Component1 {
+            value: u32,
+        }
+
+        let mut world = World::default();
+
+        world.register_component::<Component1>();
+
+        let e = world.spawn();
+
+        let comp = Component1 { value: 5 };
+
+        world.insert_component(e, comp);
+
+        let comp = world.get_component::<Component1>(e);
+
+        if let Some(comp) = comp {
+            assert_eq!(comp.value, 5);
+        } else {
+            panic!("Failed to retrieve comp!");
+        }
+    }
+
+    #[test]
+    fn resource_storage() {
+        #[derive(Resource)]
+        pub struct ResType {
+            a: f32,
+            b: usize,
+        }
+
+        let mut world = World::default();
+
+        let resource = ResType { a: 6.4, b: 6345 };
+
+        world.insert_resource(resource);
+
+        if let Some(resource) = world.get_resource::<ResType>() {
+            assert_eq!(resource.a, 6.4);
+            assert_eq!(resource.b, 6345);
+        } else {
+            panic!("Failed to retrieve Resource!");
+        }
+    }
+}

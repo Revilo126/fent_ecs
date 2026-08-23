@@ -7,7 +7,7 @@ use crate::{component::identification::component_id, entity::Entity};
 pub mod vec;
 
 /// The trait to be implemented by each component storage.
-pub trait ComponentStorage: 'static + Any {
+pub trait ComponentStorage: 'static + Any + Default {
     type Component;
 
     fn get(&self, entity: Entity) -> Option<&Self::Component>;

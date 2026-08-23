@@ -10,7 +10,7 @@ pub mod system;
 
 #[cfg(test)]
 mod test {
-    use crate::{component::identification::component_id, entity::Entities};
+    use crate::{entity::Entities, world::World};
 
     #[test]
     fn entity_bulk_alloc_free() {
@@ -31,16 +31,20 @@ mod test {
     }
 
     #[test]
-    fn component_type() {
-        struct Obj1;
-        struct Obj2;
+    fn world_idk_test() {
+        let mut world = World::default();
 
-        let i = component_id::<Obj1>();
-        assert_eq!(i, 0);
-        let j = component_id::<Obj2>();
-        assert_eq!(j, 1);
+        let mut ids = Vec::new();
 
-        let i = component_id::<Obj1>();
-        assert_eq!(i, 0);
+        for _ in 0..10000 {
+            let e = world.spawn();
+            ids.push(e);
+            assert!(world.entities.in_use[e]);
+        }
+
+        for &id in &ids {
+            world.despawn(id);
+            assert!(!world.entities.in_use[id]);
+        }
     }
 }
