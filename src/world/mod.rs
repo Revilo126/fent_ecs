@@ -6,17 +6,19 @@ use crate::{
     component::{
         Component,
         resource::{Resource, Resources},
-        storage::{ComponentStorage, ComponentStorages},
+        storage::{ComponentStorage, Components},
     },
     entity::{Entities, Entity},
 };
+
+pub(crate) mod unsafe_world_cell;
 
 /// The World Struct
 pub struct World {
     /// To be able to identify a [`World`] within mass storages
     pub(crate) id: WorldId,
     pub(crate) entities: Entities,
-    pub(crate) components: ComponentStorages,
+    pub(crate) components: Components,
     pub(crate) resources: Resources,
 }
 
@@ -26,7 +28,7 @@ impl Default for World {
         World {
             id: WorldId::default(),
             entities: Entities::default(),
-            components: ComponentStorages::default(),
+            components: Components::default(),
             resources: Resources::default(),
         }
     }
@@ -55,19 +57,19 @@ impl World {
         &mut self.entities
     }
 
-    /// Retrieves the world's [`ComponentStorages`]
+    /// Retrieves the world's [`Components`]
     #[inline]
-    pub fn components(&self) -> &ComponentStorages {
+    pub fn components(&self) -> &Components {
         &self.components
     }
 
-    /// Retrieves a mutable borrow of this [`World`]'s [`ComponentStorages`]
+    /// Retrieves a mutable borrow of this [`World`]'s [`Components`]
     ///
     /// # Safety
     ///
-    /// The caller must ensure no other mutable refrences to [`ComponentStorages`] exist.
+    /// The caller must ensure no other mutable refrences to [`Components`] exist.
     #[inline]
-    pub unsafe fn components_mut(&mut self) -> &mut ComponentStorages {
+    pub unsafe fn components_mut(&mut self) -> &mut Components {
         &mut self.components
     }
 
@@ -105,7 +107,7 @@ impl World {
         self.entities.free(e);
     }
 
-    /// Registers a [`Component`] to the [`ComponentStorages`]
+    /// Registers a [`Component`] to the [`Components`]
     #[inline]
     pub fn register_component<T: Component>(&mut self) {
         self.components.insert::<T::Storage>();

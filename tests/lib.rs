@@ -1,7 +1,11 @@
 #[cfg(test)]
 mod test {
     use fent_derive::{Component, Resource};
-    use fent_ecs::{component::identification::component_id, world::World};
+    use fent_ecs::{
+        component::identification::component_id,
+        system::{IntoSystem, System, arg_impl::Res},
+        world::World,
+    };
 
     #[test]
     fn component_ids() {
@@ -63,5 +67,58 @@ mod test {
         } else {
             panic!("Failed to retrieve Resource!");
         }
+    }
+
+    #[test]
+    fn system_running() {
+        #[derive(Resource)]
+        struct ResType {
+            value: i32,
+        }
+        fn test(res: Res<ResType>) {
+            assert_eq!(res.value, 42);
+        }
+
+        let mut world = World::default();
+        world.insert_resource(ResType { value: 42 });
+
+        let mut system = test.into_system().unwrap();
+        system.run(&mut world);
+    }
+
+    #[test]
+    // #[should_panic(expected = "WriteWriteConflict")]
+    fn access_system_error() {}
+
+    #[test]
+    fn system_mutability() {}
+
+    #[test]
+    fn component_storage_mutability() {
+        #[derive(Component)]
+        struct Comp {
+            a: f32,
+        }
+
+        let mut world = World::default();
+        world.register_component::<Comp>();
+
+        let e = world.spawn();
+
+        world.insert_component(e, Comp { a: 0.5 });
+
+        let Some(comp) = world.get_mut_component::<Comp>(e) else {
+            panic!("Failed to retrieve Component!");
+        };
+
+        comp.a = 0.7;
+
+        let _ = comp;
+
+        let Some(comp) = world.get_component::<Comp>(e) else {
+            panic!("Failed to retrieve Component!");
+        };
+
+        assert_eq!(comp.a, 0.7);
     }
 }

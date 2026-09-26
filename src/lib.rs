@@ -18,7 +18,7 @@ mod test {
 
         let mut ids = Vec::new();
 
-        for _ in 0..10000 {
+        for _ in 0..1000000 {
             let e = entities.alloc();
             ids.push(e);
             assert!(entities.in_use[e]);
@@ -36,7 +36,7 @@ mod test {
 
         let mut ids = Vec::new();
 
-        for _ in 0..10000 {
+        for _ in 0..1000000 {
             let e = world.spawn();
             ids.push(e);
             assert!(world.entities.in_use[e]);

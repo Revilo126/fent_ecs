@@ -40,11 +40,11 @@ where
 /// Storages are stored in a Vec of all storages.
 /// The ID for each Compoennt is the ComponentId of said object.
 #[derive(Default)]
-pub struct ComponentStorages {
+pub struct Components {
     pub(crate) storages: Vec<Option<Box<dyn ErasedComponentStorage>>>,
 }
 
-impl ComponentStorages {
+impl Components {
     pub fn insert<S>(&mut self)
     where
         S: ComponentStorage + Default,
