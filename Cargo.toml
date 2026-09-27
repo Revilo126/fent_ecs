@@ -12,6 +12,14 @@ fent_derive = { path = "fent_derive" }
 # External
 log = "0.4.34"
 
+[dev-dependencies]
+criterion = "0.8.2"
+
+
 [[test]]
 name = "integration"
 path = "tests/lib.rs"
+
+[[bench]]
+name = "storage"
+harness = false

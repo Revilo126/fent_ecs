@@ -2,7 +2,10 @@
 mod test {
     use fent_derive::{Component, Resource};
     use fent_ecs::{
-        component::identification::{component_id, resource_id},
+        component::{
+            identification::{component_id, resource_id},
+            storage::sparse_set::SparseStorage,
+        },
         world::World,
     };
 
@@ -24,6 +27,19 @@ mod test {
     }
 
     #[test]
+    fn component_ids_are_unique() {
+        struct Obj1;
+        struct Obj2;
+
+        let obj1_id = component_id::<Obj1>();
+        let obj2_id = component_id::<Obj2>();
+
+        assert_eq!(component_id::<Obj1>(), obj1_id);
+        assert_eq!(component_id::<Obj2>(), obj2_id);
+        assert_ne!(obj1_id, obj2_id);
+    }
+
+    #[test]
     fn resource_ids() {
         struct Obj1;
         struct Obj2;
@@ -41,12 +57,51 @@ mod test {
     }
 
     #[test]
+    fn resource_ids_are_unique() {
+        struct Obj1;
+        struct Obj2;
+
+        let obj1_id = resource_id::<Obj1>();
+        let obj2_id = resource_id::<Obj2>();
+
+        assert_eq!(resource_id::<Obj1>(), obj1_id);
+        assert_eq!(resource_id::<Obj2>(), obj2_id);
+        assert_ne!(obj1_id, obj2_id);
+    }
+
+    #[test]
     fn component_storage() {
         #[derive(Component)]
         pub struct Component1 {
             value: u32,
         }
 
+        let mut world = World::default();
+
+        world.register_component::<Component1>();
+
+        let e = world.spawn();
+
+        let comp = Component1 { value: 5 };
+
+        world.insert_component(e, comp);
+
+        let comp = world.get_component::<Component1>(e);
+
+        if let Some(comp) = comp {
+            assert_eq!(comp.value, 5);
+        } else {
+            panic!("Failed to retrieve comp!");
+        }
+    }
+
+    #[test]
+    fn component_sparse_set_storage() {
+        #[derive(Component)]
+        #[storage(SparseStorage)]
+        pub struct Component1 {
+            value: u32,
+        }
         let mut world = World::default();
 
         world.register_component::<Component1>();
@@ -92,8 +147,8 @@ mod test {
     // #[should_panic(expected = "WriteWriteConflict")]
     // fn access_system_error() {}
 
-    #[test]
-    fn system_mutability() {}
+    // #[test]
+    // fn system_mutability() {}
 
     #[test]
     fn component_storage_mutability() {

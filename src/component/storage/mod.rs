@@ -4,6 +4,7 @@ use std::any::Any;
 
 use crate::{component::identification::component_id, entity::Entity};
 
+pub mod sparse_set;
 pub mod vec;
 
 /// The trait to be implemented by each component storage.
@@ -45,7 +46,7 @@ pub struct Components {
 }
 
 impl Components {
-    pub fn insert<S>(&mut self)
+    fn ensure_storage<S>(&mut self) -> usize
     where
         S: ComponentStorage + Default,
     {
@@ -55,19 +56,25 @@ impl Components {
             self.storages.resize_with(id + 1, || None);
         }
 
-        self.storages[id] = Some(Box::new(S::default()));
+        if self.storages[id].is_none() {
+            self.storages[id] = Some(Box::new(S::default()));
+        }
+
+        id
+    }
+
+    pub fn insert<S>(&mut self)
+    where
+        S: ComponentStorage + Default,
+    {
+        let _ = self.ensure_storage::<S>();
     }
 
     pub fn get_or_insert<S>(&mut self) -> Option<&S>
     where
         S: ComponentStorage + Default,
     {
-        let id = component_id::<S::Component>();
-
-        if self.storages.len() <= id {
-            self.storages.resize_with(id + 1, || None);
-            self.storages[id] = Some(Box::new(S::default()));
-        }
+        let id = self.ensure_storage::<S>();
 
         self.storages
             .get(id)?
@@ -80,12 +87,7 @@ impl Components {
     where
         S: ComponentStorage + Default,
     {
-        let id = component_id::<S::Component>();
-
-        if self.storages.len() <= id {
-            self.storages.resize_with(id + 1, || None);
-            self.storages[id] = Some(Box::new(S::default()));
-        }
+        let id = self.ensure_storage::<S>();
 
         self.storages
             .get_mut(id)?

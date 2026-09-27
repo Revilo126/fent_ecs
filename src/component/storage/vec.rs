@@ -1,7 +1,5 @@
 //! Contains the default [`Component`] Vec storages.
 
-use std::marker::PhantomData;
-
 use crate::{
     component::{Component, storage::ComponentStorage},
     entity::Entity,
@@ -9,9 +7,8 @@ use crate::{
 
 /// Default storage option for [`Component`]'s
 pub struct VecStorage<T: Component> {
-    /// The index of each Component is at it's [`ComponentId`]
+    /// The entity ID is used as the index into `values`
     pub(crate) values: Vec<Option<T>>,
-    _marker: PhantomData<T>,
 }
 
 impl<T: Component> ComponentStorage for VecStorage<T> {
@@ -40,9 +37,6 @@ impl<T: Component> ComponentStorage for VecStorage<T> {
 
 impl<T: Component> Default for VecStorage<T> {
     fn default() -> Self {
-        Self {
-            values: Vec::new(),
-            _marker: PhantomData,
-        }
+        Self { values: Vec::new() }
     }
 }
