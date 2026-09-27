@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 authors = ["Revilo126"]
+description = "Simple ECS library"
+repository = "https://github.com/Revilo126/fent_ecs"
+readme = "README.md"
+keywords = ["ecs"]
+catagories = ["data-structures"]
 
 [dependencies]
 # Internal
-fent_derive = { path = "fent_derive" }
+fent_derive = { path = "fent_derive", version = "0.1.0" }
 
 # External
 log = "0.4.34"
