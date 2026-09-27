@@ -1,6 +1,9 @@
 //! Worlds are the object in charge of storing entities and components.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    any::Any,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::{
     component::{
@@ -9,6 +12,7 @@ use crate::{
         storage::{ComponentStorage, Components},
     },
     entity::{Entities, Entity},
+    event::{Event, Events, identification::event_id},
 };
 
 pub(crate) mod unsafe_world_cell;
@@ -20,6 +24,7 @@ pub struct World {
     pub(crate) entities: Entities,
     pub(crate) components: Components,
     pub(crate) resources: Resources,
+    pub(crate) events: Events,
 }
 
 impl Default for World {
@@ -30,6 +35,7 @@ impl Default for World {
             entities: Entities::default(),
             components: Components::default(),
             resources: Resources::default(),
+            events: Events::default(),
         }
     }
 }
@@ -87,6 +93,22 @@ impl World {
     #[inline]
     pub unsafe fn resources_mut(&mut self) -> &mut Resources {
         &mut self.resources
+    }
+
+    /// Retrieves the world's [`Events`]
+    #[inline]
+    pub fn events(&self) -> &Events {
+        &self.events
+    }
+
+    /// Retrieves a mutable borrow of this [`World`]'s [`Events`]
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure no other mutable refrence to [`Events`] exist.
+    #[inline]
+    pub unsafe fn events_mut(&mut self) -> &mut Events {
+        &mut self.events
     }
 
     /// Retrieve the amount of [`Entities`] in the world.
@@ -196,6 +218,30 @@ impl World {
         R: Resource,
     {
         self.resources.remove::<R>();
+    }
+
+    /// Schedules an EventHandler to run on an [`Event`]
+    #[inline]
+    pub fn on<E>(&mut self, handler: impl FnMut(&mut World, &E) + 'static)
+    where
+        E: Event,
+    {
+        self.events.on::<E, _>(handler);
+    }
+
+    /// Emits an [`Event`] and runs its handlers
+    #[inline]
+    pub fn emit<E: Event>(&mut self, event: E) {
+        let id = event_id::<E>();
+
+        let mut handlers = std::mem::take(&mut self.events.handlers[id]);
+        let event = &event as &dyn Any;
+
+        for handler in &mut handlers {
+            handler.call(self, event);
+        }
+
+        self.events.handlers[id] = handlers;
     }
 }
 
