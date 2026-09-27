@@ -8,3 +8,4 @@
 # Files 
 .*
 !/.gitignore
+!/.github/
