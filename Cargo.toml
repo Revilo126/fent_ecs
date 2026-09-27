@@ -8,7 +8,10 @@ description = "Simple ECS library"
 repository = "https://github.com/Revilo126/fent_ecs"
 readme = "README.md"
 keywords = ["ecs"]
-catagories = ["data-structures"]
+categories = ["data-structures"]
+
+[workspace]
+members = ["fent_derive"]
 
 [dependencies]
 # Internal
