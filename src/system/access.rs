@@ -2,7 +2,7 @@
 
 use std::any::TypeId;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Access {
     reads: Vec<TypeId>,
     writes: Vec<TypeId>,

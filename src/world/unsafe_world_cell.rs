@@ -11,7 +11,7 @@ pub struct UnsafeWorldCell<'world> {
 }
 
 impl<'world> UnsafeWorldCell<'world> {
-    pub(crate) unsafe fn from_world(world: &'world mut World) -> Self {
+    pub unsafe fn from_world(world: &'world mut World) -> Self {
         Self {
             world,
             marker: PhantomData,

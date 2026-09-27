@@ -2,20 +2,20 @@
 //!
 //! In Fent ECS they are simply functions
 
-
 use crate::{
     system::access::Access,
     world::{World, unsafe_world_cell::UnsafeWorldCell},
 };
 
-pub(crate) mod access;
+pub mod access;
 pub mod arg_impl;
+pub mod function_system;
 pub mod system_arg;
 
 pub trait System: Send + Sync + 'static {
     fn run(&mut self, world: &mut World);
 
-    fn access(&self) -> &Access;
+    fn access(&self) -> Access;
 
     /// # Safety
     ///

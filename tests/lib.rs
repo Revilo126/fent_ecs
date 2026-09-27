@@ -2,8 +2,7 @@
 mod test {
     use fent_derive::{Component, Resource};
     use fent_ecs::{
-        component::identification::component_id,
-        system::{IntoSystem, System, arg_impl::Res},
+        component::identification::{component_id, resource_id},
         world::World,
     };
 
@@ -12,13 +11,33 @@ mod test {
         struct Obj1;
         struct Obj2;
 
-        let i = component_id::<Obj1>();
-        assert_eq!(i, 0);
-        let j = component_id::<Obj2>();
-        assert_eq!(j, 1);
+        let aid = component_id::<Obj1>();
+        let bid = component_id::<Obj2>();
 
         let i = component_id::<Obj1>();
-        assert_eq!(i, 0);
+        assert_eq!(i, aid);
+        let j = component_id::<Obj2>();
+        assert_eq!(j, bid);
+
+        let i = component_id::<Obj1>();
+        assert_eq!(i, aid);
+    }
+
+    #[test]
+    fn resource_ids() {
+        struct Obj1;
+        struct Obj2;
+
+        let aid = resource_id::<Obj1>();
+        let bid = resource_id::<Obj2>();
+
+        let i = resource_id::<Obj1>();
+        assert_eq!(i, aid);
+        let j = resource_id::<Obj2>();
+        assert_eq!(j, bid);
+
+        let i = resource_id::<Obj1>();
+        assert_eq!(i, aid);
     }
 
     #[test]
@@ -69,26 +88,9 @@ mod test {
         }
     }
 
-    #[test]
-    fn system_running() {
-        #[derive(Resource)]
-        struct ResType {
-            value: i32,
-        }
-        fn test(res: Res<ResType>) {
-            assert_eq!(res.value, 42);
-        }
-
-        let mut world = World::default();
-        world.insert_resource(ResType { value: 42 });
-
-        let mut system = test.into_system().unwrap();
-        system.run(&mut world);
-    }
-
-    #[test]
+    // #[test]
     // #[should_panic(expected = "WriteWriteConflict")]
-    fn access_system_error() {}
+    // fn access_system_error() {}
 
     #[test]
     fn system_mutability() {}

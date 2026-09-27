@@ -10,7 +10,11 @@ pub mod system;
 
 #[cfg(test)]
 mod test {
-    use crate::{entity::Entities, world::World};
+    use crate::{
+        entity::Entities,
+        system::{IntoSystem, System},
+        world::{World, unsafe_world_cell::UnsafeWorldCell},
+    };
 
     #[test]
     fn entity_bulk_alloc_free() {
@@ -46,5 +50,19 @@ mod test {
             world.despawn(id);
             assert!(!world.entities.in_use[id]);
         }
+    }
+
+    #[should_panic(expected = "assertion `left == right`")]
+    #[test]
+    fn system_running() {
+        fn test_system(_world: &mut World) {
+            assert_eq!(1, 2);
+        }
+
+        let mut world = World::default();
+
+        let unsafe_world = unsafe { UnsafeWorldCell::from_world(&mut world) };
+
+        unsafe { test_system.into_system().unsafe_run(unsafe_world) };
     }
 }
