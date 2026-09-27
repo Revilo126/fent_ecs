@@ -15,8 +15,6 @@ This mainly includes bevy_ecs and hecs.
 
 # Example
 
-```
-```
 ```rust
 let mut world = World::default();
 
