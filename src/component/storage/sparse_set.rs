@@ -20,29 +20,41 @@ impl<T: Component> SparseStorage<T> {
         }
     }
 
+    #[inline]
     fn index_of(&self, entity: Entity) -> Option<usize> {
-        let index = *self.sparse.get(entity)?;
-
-        if index == ABSENT {
-            return None;
+        match self.sparse.get(entity) {
+            Some(&index) if index != ABSENT => Some(index),
+            _ => None,
         }
+    }
 
-        if self.entities.get(index).copied() != Some(entity) {
-            return None;
-        }
+    pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
+        self.entities.iter().copied().zip(self.values.iter())
+    }
 
-        Some(index)
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
+        self.entities.iter().copied().zip(self.values.iter_mut())
+    }
+
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
     }
 }
 
 impl<T: Component> ComponentStorage for SparseStorage<T> {
     type Component = T;
 
+    #[inline]
     fn get(&self, entity: Entity) -> Option<&T> {
         let index = self.index_of(entity)?;
         self.values.get(index)
     }
 
+    #[inline]
     fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
         let index = self.index_of(entity)?;
         self.values.get_mut(index)
@@ -51,21 +63,19 @@ impl<T: Component> ComponentStorage for SparseStorage<T> {
     fn insert(&mut self, entity: Entity, component: T) {
         self.ensure_sparse_capacity(entity);
 
-        if let Some(index) = self.index_of(entity) {
-            self.values[index] = component;
+        let slot = self.sparse[entity];
+        if slot != ABSENT {
+            self.values[slot] = component;
             return;
         }
 
-        let index = self.values.len();
-
-        self.sparse[entity] = index;
+        self.sparse[entity] = self.values.len();
         self.entities.push(entity);
         self.values.push(component);
     }
 
     fn remove(&mut self, entity: Entity) -> Option<T> {
         let removed_index = self.index_of(entity)?;
-
         let last_index = self.values.len() - 1;
 
         self.sparse[entity] = ABSENT;

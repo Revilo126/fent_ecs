@@ -1,13 +1,13 @@
-//! Contains the default [`Component`] Vec storages.
+//! Contains the default [Component] Vec storages.
 
 use crate::{
     component::{Component, storage::ComponentStorage},
     entity::Entity,
 };
 
-/// Default storage option for [`Component`]'s
+/// Default storage option for [Component]'s
 pub struct VecStorage<T: Component> {
-    /// The entity ID is used as the index into `values`
+    /// The entity ID is used as the index into values
     pub(crate) values: Vec<Option<T>>,
 }
 

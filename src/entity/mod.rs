@@ -56,4 +56,11 @@ impl Entities {
     pub fn entity_allocated(&self) -> usize {
         self.in_use.iter().filter(|&&v| v).count()
     }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = Entity> + '_ {
+        self.in_use
+            .iter()
+            .enumerate()
+            .filter_map(|(entity, &used)| used.then_some(entity))
+    }
 }

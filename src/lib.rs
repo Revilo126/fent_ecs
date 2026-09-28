@@ -19,11 +19,7 @@ pub mod system;
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        entity::Entities,
-        system::{IntoSystem, System, access::Access},
-        world::{World, unsafe_world_cell::UnsafeWorldCell},
-    };
+    use crate::{entity::Entities, schedule::Schedule, world::World};
 
     #[test]
     fn entity_bulk_alloc_free() {
@@ -64,18 +60,18 @@ mod test {
     #[should_panic(expected = "assertion `left == right`")]
     #[test]
     fn system_running() {
-        fn test_system(_world: &mut World) {
+        fn test_system() {
             assert_eq!(1, 2);
         }
 
         let mut world = World::default();
 
-        let unsafe_world = unsafe { UnsafeWorldCell::from_world(&mut world) };
+        let mut schedule = Schedule::default();
 
-        unsafe {
-            test_system
-                .into_system()
-                .unsafe_run(unsafe_world, &mut Access::default())
-        };
+        schedule.insert_system(test_system);
+
+        schedule.initialize(&mut world).unwrap();
+
+        schedule.run(&mut world);
     }
 }

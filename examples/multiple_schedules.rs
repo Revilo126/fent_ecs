@@ -1,7 +1,11 @@
 use std::io::{self, Write};
 
 use fent_derive::Resource;
-use fent_ecs::{schedule::Schedule, system::IntoSystem, world::World};
+use fent_ecs::{
+    schedule::Schedule,
+    system::impl_param::{Res, ResMut},
+    world::World,
+};
 
 const PASSWORD: &str = "Hello12";
 
@@ -13,7 +17,6 @@ const PASSWORD: &str = "Hello12";
 /// # Note
 ///
 /// Yes the test is stupid.
-///
 fn main() {
     let mut world = World::default();
 
@@ -21,13 +24,13 @@ fn main() {
     world.insert_resource(PasswordCorrect(false));
 
     let mut print_schedule = Schedule::default();
-    print_schedule.insert_system(print_text.into_system());
+    print_schedule.insert_system(print_text);
 
     let mut input_schedule = Schedule::default();
-    input_schedule.insert_system(get_input.into_system());
+    input_schedule.insert_system(get_input);
 
     let mut check_schedule = Schedule::default();
-    check_schedule.insert_system(check_guess.into_system());
+    check_schedule.insert_system(check_guess);
 
     loop {
         print_schedule.run(&mut world);
@@ -49,7 +52,7 @@ fn main() {
     println!("Correct password!");
 }
 
-fn print_text(_world: &mut World) {
+fn print_text() {
     print!("What is the password? ");
     io::stdout().flush().unwrap();
 }
@@ -60,7 +63,7 @@ struct Guess(String);
 #[derive(Resource)]
 struct PasswordCorrect(bool);
 
-fn get_input(world: &mut World) {
+fn get_input(mut guess: ResMut<Guess>) {
     let mut input = String::new();
 
     io::stdin()
@@ -69,22 +72,11 @@ fn get_input(world: &mut World) {
 
     let password = input.trim().to_owned();
 
-    let Some(guess) = world.get_mut_resource::<Guess>() else {
-        panic!("WTF?");
-    };
-
     guess.0 = password;
 }
 
-fn check_guess(world: &mut World) {
-    let is_correct = world
-        .get_resource::<Guess>()
-        .map(|guess| guess.0 == PASSWORD)
-        .unwrap_or(false);
-
-    let Some(correct) = world.get_mut_resource::<PasswordCorrect>() else {
-        panic!("Seriously?");
-    };
+fn check_guess(guess: Res<Guess>, mut correct: ResMut<PasswordCorrect>) {
+    let is_correct = guess.0 == PASSWORD;
 
     correct.0 = is_correct;
 }

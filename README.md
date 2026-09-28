@@ -20,11 +20,7 @@ struct Origin {
     y: u32,
 }
 
-fn system(world: &mut World) {
-    let Some(o) = world.get_mut_resource::<Origin>() else {
-        panic!("Failed to retrieve \"Origin\" resource!");
-    };
-
+fn system(mut o: ResMut<Origin>) {
     if o.x != 0 || o.y != 0 {
         o.x = 0;
         o.y = 0;
@@ -34,8 +30,9 @@ fn system(world: &mut World) {
 world.insert_resource(Origin { x: 1, y: 4 });
 
 let mut schedule = Schedule::default();
-schedule.insert_system(system.into_system());
+schedule.insert_system(system);
 
+schedule.initialize(&mut world).unwrap();
 schedule.run(&mut world);
 
 let Some(o) = world.get_resource::<Origin>() else {
