@@ -1,6 +1,6 @@
 [package]
 name = "fent_ecs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
 authors = ["Revilo126"]
@@ -15,7 +15,7 @@ members = ["fent_derive"]
 
 [dependencies]
 # Internal
-fent_derive = { path = "fent_derive", version = "0.1.0" }
+fent_derive = { path = "fent_derive", version = "0.1.1" }
 
 # External
 log = "0.4.34"

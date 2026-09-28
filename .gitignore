@@ -7,5 +7,9 @@
 
 # Files 
 .*
+*.lock
+
+# Allow these dotfiles
 !/.gitignore
 !/.github/
+
