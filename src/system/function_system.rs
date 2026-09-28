@@ -5,15 +5,11 @@ use crate::{
 
 pub struct FunctionSystem<F> {
     function: F,
-    access: Access,
 }
 
 impl<F> FunctionSystem<F> {
     pub fn new(function: F) -> Self {
-        Self {
-            function,
-            access: Access::default(),
-        }
+        Self { function }
     }
 }
 
@@ -25,11 +21,9 @@ where
         (self.function)(world);
     }
 
-    fn access(&self) -> Access {
-        self.access.clone()
-    }
+    fn access(&self, _access: &mut Access) {}
 
-    unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>) {
+    unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>, _access: &mut Access) {
         self.run(unsafe { world.world_mut() });
     }
 }

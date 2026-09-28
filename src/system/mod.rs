@@ -15,14 +15,14 @@ pub mod system_arg;
 pub trait System: Send + Sync + 'static {
     fn run(&mut self, world: &mut World);
 
-    fn access(&self) -> Access;
+    fn access(&self, access: &mut Access);
 
     /// # Safety
     ///
     /// The caller must ensure that all accesses requested by this system are
     /// compatible with the accesses already active in the world. In particular,
     /// mutable accesses must not alias any other read or write access.
-    unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>);
+    unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>, access: &mut Access);
 }
 
 pub trait IntoSystem<Marker>: Sized {

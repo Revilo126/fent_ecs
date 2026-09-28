@@ -1,4 +1,12 @@
 //! A Fast ECS Library
+//!
+//! # Examples
+//!
+//! Run fent_ecs' examples with:
+//!
+//! ```text
+//! cargo run --example multiple_schedules
+//! ```
 
 // Storage of ECS object
 pub mod event;
@@ -11,15 +19,9 @@ pub mod system;
 
 #[cfg(test)]
 mod test {
-    use std::sync::{
-        Arc,
-        atomic::{AtomicUsize, Ordering},
-    };
-
     use crate::{
         entity::Entities,
-        event::Event,
-        system::{IntoSystem, System},
+        system::{IntoSystem, System, access::Access},
         world::{World, unsafe_world_cell::UnsafeWorldCell},
     };
 
@@ -70,28 +72,10 @@ mod test {
 
         let unsafe_world = unsafe { UnsafeWorldCell::from_world(&mut world) };
 
-        unsafe { test_system.into_system().unsafe_run(unsafe_world) };
-    }
-
-    #[test]
-    fn event_handler_called() {
-        struct TestEvent {
-            value: usize,
-        }
-
-        impl Event for TestEvent {}
-
-        let mut world = World::default();
-
-        let total = Arc::new(AtomicUsize::new(0));
-        let total_for_handler = Arc::clone(&total);
-
-        world.on::<TestEvent>(move |_world, event| {
-            total_for_handler.fetch_add(event.value, Ordering::SeqCst);
-        });
-
-        world.emit(TestEvent { value: 5 });
-
-        assert_eq!(total.load(Ordering::SeqCst), 5);
+        unsafe {
+            test_system
+                .into_system()
+                .unsafe_run(unsafe_world, &mut Access::default())
+        };
     }
 }

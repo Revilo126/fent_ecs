@@ -1,11 +1,18 @@
 #[cfg(test)]
 mod test {
-    use fent_derive::{Component, Resource};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+
+    use fent_derive::{Component, Event, Resource};
     use fent_ecs::{
         component::{
             identification::{component_id, resource_id},
             storage::sparse_set::SparseStorage,
         },
+        schedule::Schedule,
+        system::IntoSystem,
         world::World,
     };
 
@@ -177,5 +184,62 @@ mod test {
         };
 
         assert_eq!(comp.a, 0.7);
+    }
+
+    #[test]
+    fn event_handler_called() {
+        #[derive(Event)]
+        struct TestEvent {
+            value: usize,
+        }
+
+        let mut world = World::default();
+
+        let total = Arc::new(AtomicUsize::new(0));
+        let total_for_handler = Arc::clone(&total);
+
+        world.on::<TestEvent>(move |_world, event| {
+            total_for_handler.fetch_add(event.value, Ordering::SeqCst);
+        });
+
+        world.emit(TestEvent { value: 5 });
+
+        assert_eq!(total.load(Ordering::SeqCst), 5);
+    }
+
+    #[test]
+    fn readme_example() {
+        let mut world = World::default();
+
+        #[derive(Resource)]
+        struct Origin {
+            x: u32,
+            y: u32,
+        }
+
+        fn system(world: &mut World) {
+            let Some(o) = world.get_mut_resource::<Origin>() else {
+                panic!("Failed to retrieve \"Origin\" resource!");
+            };
+
+            if o.x != 0 || o.y != 0 {
+                o.x = 0;
+                o.y = 0;
+            }
+        }
+
+        world.insert_resource(Origin { x: 1, y: 4 });
+
+        let mut schedule = Schedule::default();
+        schedule.insert_system(system.into_system());
+
+        schedule.run(&mut world);
+
+        let Some(o) = world.get_resource::<Origin>() else {
+            panic!("Failed to retrieve \"Origin\" resource!");
+        };
+
+        assert_eq!(o.x, 0);
+        assert_eq!(o.y, 0);
     }
 }

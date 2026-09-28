@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Provides macros for fent_ecs"
 license = "MIT"
+repository = "https://github.com/Revilo126/fent_ecs"
 
 [lib]
 proc-macro = true

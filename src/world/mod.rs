@@ -145,6 +145,8 @@ impl World {
             .get_mut_or_insert::<T::Storage>()
             .unwrap()
             .insert(entity, component);
+
+        T::on_add(entity, self);
     }
 
     /// Returns a [`Component`] for an [`Entity`]
@@ -180,6 +182,8 @@ impl World {
             .get_mut::<T::Storage>()
             .unwrap()
             .remove(entity);
+
+        T::on_remove(entity, self);
     }
 
     /// Inserts a [`Resource`] into the current [`World`]

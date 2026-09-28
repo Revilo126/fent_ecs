@@ -1,7 +1,7 @@
 //! Components are objects stored in conjunction with entities,
 //! providing data on said entities.
 
-use crate::{component::storage::ComponentStorage, world::World};
+use crate::{component::storage::ComponentStorage, entity::Entity, world::World};
 
 pub mod identification;
 pub mod resource;
@@ -11,22 +11,7 @@ pub mod storage;
 pub trait Component: Send + Sync + Sized + 'static {
     type Storage: ComponentStorage<Component = Self>;
 
-    fn on_add() -> Option<ComponentAction> {
-        None
-    }
+    fn on_add(entity: Entity, world: &mut World);
 
-    fn on_insert() -> Option<ComponentAction> {
-        None
-    }
-
-    fn on_remove() -> Option<ComponentAction> {
-        None
-    }
-
-    fn on_despawn() -> Option<ComponentAction> {
-        None
-    }
+    fn on_remove(entity: Entity, world: &mut World);
 }
-
-// Not working now
-type ComponentAction = fn(&mut World);
