@@ -19,7 +19,7 @@ where
     fn call(&mut self, world: &mut World, event: &dyn Any) {
         let event = event
             .downcast_ref::<E>()
-            .expect("event type did not match handler type");
+            .expect("Event type was not expected for the handler!");
 
         (self.function)(world, event);
     }

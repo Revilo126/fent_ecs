@@ -25,6 +25,9 @@ pub trait System: Send + Sync + 'static {
     /// compatible with the accesses already active in the world. In particular,
     /// mutable accesses must not alias any other read or write access.
     unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>);
+
+    /// Runs after the system is finished, useful for applying actions after completion.
+    fn apply(&mut self, world: &mut World);
 }
 
 pub trait IntoSystem<Marker = ()> {

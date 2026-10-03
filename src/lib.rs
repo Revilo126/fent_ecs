@@ -28,14 +28,14 @@ mod test {
         let mut ids = Vec::new();
 
         for _ in 0..1000000 {
-            let e = entities.alloc();
+            let e = entities.spawn();
             ids.push(e);
-            assert!(entities.in_use[e]);
+            assert!(entities.in_use[e.index()]);
         }
 
         for &id in &ids {
-            entities.free(id);
-            assert!(!entities.in_use[id]);
+            entities.despawn(id);
+            assert!(!entities.in_use[id.index()]);
         }
     }
 
@@ -48,12 +48,12 @@ mod test {
         for _ in 0..1000000 {
             let e = world.spawn();
             ids.push(e);
-            assert!(world.entities.in_use[e]);
+            assert!(world.entities.in_use[e.index()]);
         }
 
         for &id in &ids {
             world.despawn(id);
-            assert!(!world.entities.in_use[id]);
+            assert!(!world.entities.in_use[id.index()]);
         }
     }
 

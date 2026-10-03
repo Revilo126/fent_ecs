@@ -11,6 +11,7 @@ use crate::{
     world::{World, unsafe_world_cell::UnsafeWorldCell},
 };
 
+pub mod command;
 pub mod queries;
 
 pub struct Res<'w, T: 'static + Resource> {

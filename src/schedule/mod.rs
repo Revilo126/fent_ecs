@@ -34,10 +34,11 @@ impl Schedule {
     }
 
     pub fn run(&mut self, world: &mut World) {
-        let unsafe_world = unsafe { UnsafeWorldCell::from_world(world) };
-
         for sys in &mut self.systems {
+            let unsafe_world = unsafe { UnsafeWorldCell::from_world(world) };
             unsafe { sys.unsafe_run(unsafe_world) };
+
+            sys.apply(world);
         }
     }
 }

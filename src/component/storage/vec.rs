@@ -1,9 +1,6 @@
 //! Contains the default [Component] Vec storages.
 
-use crate::{
-    component::{Component, storage::ComponentStorage},
-    entity::Entity,
-};
+use crate::component::{Component, storage::ComponentStorage};
 
 /// Default storage option for [Component]'s
 pub struct VecStorage<T: Component> {
@@ -14,24 +11,24 @@ pub struct VecStorage<T: Component> {
 impl<T: Component> ComponentStorage for VecStorage<T> {
     type Component = T;
 
-    fn get(&self, entity: Entity) -> Option<&T> {
-        self.values.get(entity).and_then(Option::as_ref)
+    fn get(&self, index: usize) -> Option<&T> {
+        self.values.get(index).and_then(Option::as_ref)
     }
 
-    fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        self.values.get_mut(entity).and_then(Option::as_mut)
+    fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        self.values.get_mut(index).and_then(Option::as_mut)
     }
 
-    fn insert(&mut self, entity: Entity, component: T) {
-        if self.values.len() <= entity {
-            self.values.resize_with(entity + 1, || None);
+    fn insert(&mut self, index: usize, component: T) {
+        if self.values.len() <= index {
+            self.values.resize_with(index + 1, || None);
         }
 
-        self.values[entity] = Some(component);
+        self.values[index] = Some(component);
     }
 
-    fn remove(&mut self, entity: Entity) -> Option<T> {
-        self.values.get_mut(entity).and_then(Option::take)
+    fn remove(&mut self, index: usize) -> Option<T> {
+        self.values.get_mut(index).and_then(Option::take)
     }
 }
 

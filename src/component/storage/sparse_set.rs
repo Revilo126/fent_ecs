@@ -1,38 +1,35 @@
 //! Contains the [`ComponentStorage`] implementation with a sparse set.
 
-use crate::{
-    component::{Component, storage::ComponentStorage},
-    entity::Entity,
-};
+use crate::component::{Component, storage::ComponentStorage};
 
 const ABSENT: usize = usize::MAX;
 
 pub struct SparseStorage<T: Component> {
     sparse: Vec<usize>,
-    entities: Vec<Entity>,
+    entities: Vec<usize>,
     values: Vec<T>,
 }
 
 impl<T: Component> SparseStorage<T> {
-    fn ensure_sparse_capacity(&mut self, entity: Entity) {
-        if self.sparse.len() <= entity {
-            self.sparse.resize(entity + 1, ABSENT);
+    fn ensure_sparse_capacity(&mut self, index: usize) {
+        if self.sparse.len() <= index {
+            self.sparse.resize(index + 1, ABSENT);
         }
     }
 
     #[inline]
-    fn index_of(&self, entity: Entity) -> Option<usize> {
-        match self.sparse.get(entity) {
+    fn index_of(&self, index: usize) -> Option<usize> {
+        match self.sparse.get(index) {
             Some(&index) if index != ABSENT => Some(index),
             _ => None,
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
+    pub fn iter(&self) -> impl Iterator<Item = (usize, &T)> {
         self.entities.iter().copied().zip(self.values.iter())
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (usize, &mut T)> {
         self.entities.iter().copied().zip(self.values.iter_mut())
     }
 
@@ -49,36 +46,36 @@ impl<T: Component> ComponentStorage for SparseStorage<T> {
     type Component = T;
 
     #[inline]
-    fn get(&self, entity: Entity) -> Option<&T> {
-        let index = self.index_of(entity)?;
+    fn get(&self, index: usize) -> Option<&T> {
+        let index = self.index_of(index)?;
         self.values.get(index)
     }
 
     #[inline]
-    fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        let index = self.index_of(entity)?;
+    fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        let index = self.index_of(index)?;
         self.values.get_mut(index)
     }
 
-    fn insert(&mut self, entity: Entity, component: T) {
-        self.ensure_sparse_capacity(entity);
+    fn insert(&mut self, index: usize, component: T) {
+        self.ensure_sparse_capacity(index);
 
-        let slot = self.sparse[entity];
+        let slot = self.sparse[index];
         if slot != ABSENT {
             self.values[slot] = component;
             return;
         }
 
-        self.sparse[entity] = self.values.len();
-        self.entities.push(entity);
+        self.sparse[index] = self.values.len();
+        self.entities.push(index);
         self.values.push(component);
     }
 
-    fn remove(&mut self, entity: Entity) -> Option<T> {
-        let removed_index = self.index_of(entity)?;
+    fn remove(&mut self, index: usize) -> Option<T> {
+        let removed_index = self.index_of(index)?;
         let last_index = self.values.len() - 1;
 
-        self.sparse[entity] = ABSENT;
+        self.sparse[index] = ABSENT;
 
         self.entities.swap_remove(removed_index);
         let removed_component = self.values.swap_remove(removed_index);

@@ -120,13 +120,21 @@ impl World {
     /// Spawn a new [`Entity`]
     #[inline]
     pub fn spawn(&mut self) -> Entity {
-        self.entities.alloc()
+        self.entities.spawn()
     }
 
     /// Despawn the provided [`Entity`]
     #[inline]
-    pub fn despawn(&mut self, e: Entity) {
-        self.entities.free(e);
+    pub fn despawn(&mut self, entity: Entity) -> bool {
+        if !self.entities.despawn(entity) {
+            return false;
+        }
+
+        for storage in self.components.storages.iter_mut().flatten() {
+            storage.remove_untyped(entity.index());
+        }
+
+        true
     }
 
     /// Registers a [`Component`] to the [`Components`]
@@ -141,10 +149,16 @@ impl World {
     where
         T: Component,
     {
+        assert!(
+            self.entities.is_alive(entity),
+            "Entity {:?} is not alive!",
+            entity
+        );
+
         self.components
             .get_mut_or_insert::<T::Storage>()
             .unwrap()
-            .insert(entity, component);
+            .insert(entity.index(), component);
 
         T::on_add(entity, self);
     }
@@ -155,7 +169,14 @@ impl World {
     where
         T: Component,
     {
-        self.components.get::<T::Storage>().unwrap().get(entity)
+        if !self.entities.is_alive(entity) {
+            return None;
+        }
+
+        self.components
+            .get::<T::Storage>()
+            .unwrap()
+            .get(entity.index())
     }
 
     /// Returns a mutable [`Component`] for an [`Entity`]
@@ -164,10 +185,14 @@ impl World {
     where
         T: Component,
     {
+        if !self.entities.is_alive(entity) {
+            return None;
+        }
+
         self.components
             .get_mut::<T::Storage>()
             .unwrap()
-            .get_mut(entity)
+            .get_mut(entity.index())
     }
 
     /// Removes a [`Component`] for an [`Entity`],
@@ -178,10 +203,14 @@ impl World {
     where
         T: Component,
     {
+        if !self.entities.is_alive(entity) {
+            return;
+        }
+
         self.components
             .get_mut::<T::Storage>()
             .unwrap()
-            .remove(entity);
+            .remove(entity.index());
 
         T::on_remove(entity, self);
     }

@@ -12,7 +12,7 @@ mod test {
             storage::sparse_set::SparseStorage,
         },
         schedule::Schedule,
-        system::impl_param::ResMut,
+        system::impl_param::{ResMut, command::Commands, queries::Query},
         world::World,
     };
 
@@ -150,12 +150,26 @@ mod test {
         }
     }
 
-    // #[test]
-    // #[should_panic(expected = "WriteWriteConflict")]
-    // fn access_system_error() {}
+    #[test]
+    #[should_panic(expected = "WriteWriteConflict")]
+    fn access_system_error() {
+        #[derive(Resource)]
+        struct ResType {
+            _a: i32,
+        }
 
-    // #[test]
-    // fn system_mutability() {}
+        fn failed_system(_y: ResMut<ResType>, _x: ResMut<ResType>) {}
+
+        let mut world = World::default();
+
+        world.insert_resource(ResType { _a: 4 });
+
+        let mut schedule = Schedule::default();
+        schedule.insert_system(failed_system);
+
+        schedule.initialize(&mut world).unwrap();
+        schedule.run(&mut world);
+    }
 
     #[test]
     fn component_storage_mutability() {
@@ -205,6 +219,83 @@ mod test {
         world.emit(TestEvent { value: 5 });
 
         assert_eq!(total.load(Ordering::SeqCst), 5);
+    }
+
+    #[test]
+    fn query_system() {
+        #[derive(Component)]
+        struct TestComp(u32);
+
+        let mut world = World::default();
+
+        let a = world.spawn();
+        world.insert_component(a, TestComp(4));
+
+        let b = world.spawn();
+        world.insert_component(b, TestComp(5));
+
+        fn query_system(mut q: Query<&TestComp>) {
+            let mut tot = 0;
+
+            for i in q.iter() {
+                tot += i.0;
+            }
+
+            assert_eq!(tot, 9);
+        }
+
+        let mut schedule = Schedule::default();
+        schedule.insert_system(query_system);
+
+        schedule.initialize(&mut world).unwrap();
+        schedule.run(&mut world);
+    }
+
+    #[test]
+    fn command_spawn_insert() {
+        #[derive(Component)]
+        struct Pos {
+            x: u32,
+            y: u32,
+        }
+
+        fn spawn_system(mut cmd: Commands) {
+            cmd.spawn(|entity, world| {
+                world.insert_component(entity, Pos { x: 1, y: 3 });
+            });
+
+            cmd.spawn(|entity, world| {
+                world.insert_component(entity, Pos { x: 3, y: 1 });
+            });
+        }
+
+        fn ensure_system(mut query: Query<&Pos>) {
+            let mut tot = (0, 0);
+
+            for i in query.iter() {
+                tot.0 += i.x;
+                tot.1 += i.y;
+            }
+
+            assert_eq!(tot.0, 4);
+            assert_eq!(tot.1, 4);
+        }
+
+        let mut world = World::default();
+
+        let mut schedule = Schedule::default();
+        schedule.insert_system(spawn_system);
+
+        schedule.initialize(&mut world).unwrap();
+        schedule.run(&mut world);
+
+        drop(schedule);
+
+        let mut schedule = Schedule::default();
+        schedule.insert_system(ensure_system);
+
+        schedule.initialize(&mut world).unwrap();
+        schedule.run(&mut world);
     }
 
     #[test]

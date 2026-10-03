@@ -48,4 +48,3 @@ assert_eq!(o.y, 0);
 
 Many characteristics of this ECS library are inspired from other notorious ones,
 This mainly includes bevy_ecs and hecs.
-

@@ -2,7 +2,7 @@
 
 use std::any::Any;
 
-use crate::{component::identification::component_id, entity::Entity};
+use crate::component::identification::component_id;
 
 pub mod sparse_set;
 pub mod vec;
@@ -11,15 +11,17 @@ pub mod vec;
 pub trait ComponentStorage: 'static + Any + Default {
     type Component;
 
-    fn get(&self, entity: Entity) -> Option<&Self::Component>;
-    fn get_mut(&mut self, entity: Entity) -> Option<&mut Self::Component>;
-    fn insert(&mut self, entity: Entity, component: Self::Component);
-    fn remove(&mut self, entity: Entity) -> Option<Self::Component>;
+    fn get(&self, index: usize) -> Option<&Self::Component>;
+    fn get_mut(&mut self, index: usize) -> Option<&mut Self::Component>;
+    fn insert(&mut self, index: usize, component: Self::Component);
+    fn remove(&mut self, index: usize) -> Option<Self::Component>;
 }
 
 pub trait ErasedComponentStorage: Any {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn remove_untyped(&mut self, index: usize);
 }
 
 impl<T> ErasedComponentStorage for T
@@ -32,6 +34,10 @@ where
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
+    }
+
+    fn remove_untyped(&mut self, index: usize) {
+        self.remove(index);
     }
 }
 

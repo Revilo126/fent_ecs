@@ -18,6 +18,9 @@ pub trait SystemParam {
         state: &'w mut Self::State,
         world: UnsafeWorldCell<'w>,
     ) -> Self::Item<'w>;
+
+    /// Called after the [`crate::system::System`] runs.
+    fn apply(_state: &mut Self::State, _world: &mut World) {}
 }
 
 pub type ParamItem<'w, P> = <P as SystemParam>::Item<'w>;

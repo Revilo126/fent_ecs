@@ -45,6 +45,10 @@ where
     fn run(&mut self, world: &mut World) {
         unsafe { self.unsafe_run(UnsafeWorldCell::from_world(world)) }
     }
+
+    fn apply(&mut self, world: &mut World) {
+        F::Param::apply(self.state.as_mut().unwrap(), world);
+    }
 }
 
 impl<F, Marker> IntoSystem<Marker> for F
@@ -87,6 +91,11 @@ macro_rules! impl_system_param_tuple {
                 let ($($P,)*) = state;
                 // SAFETY: caller guarantees access was validated.
                 unsafe { ($($P::get_param($P, world),)*) }
+            }
+
+            fn apply(state: &mut Self::State, world: &mut World) {
+                let ($($P,)*) = state;
+                $($P::apply($P, world);)*
             }
         }
     };
