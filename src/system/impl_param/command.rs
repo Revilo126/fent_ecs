@@ -1,8 +1,9 @@
 //! Commands are a way for systems to do actions like spawning and despawning [`Entity`]'s.
 
 use crate::{
-    component::{Component, resource::Resource},
+    component::{Component, bundle::Bundle, resource::Resource},
     entity::Entity,
+    event::Event,
     system::{
         access::{Access, AccessError},
         system_param::SystemParam,
@@ -41,13 +42,10 @@ pub struct Commands<'w> {
 }
 
 impl<'w> Commands<'w> {
-    pub fn spawn(
-        &mut self,
-        spawn_actions: impl FnOnce(Entity, &mut World) + Send + Sync + 'static,
-    ) {
+    pub fn spawn(&mut self, bundle: impl Bundle) {
         self.queue.push(move |world: &mut World| {
             let entity = world.spawn();
-            spawn_actions(entity, world);
+            bundle.insert_into(entity, world);
         });
     }
 
@@ -79,6 +77,21 @@ impl<'w> Commands<'w> {
         self.queue.push(move |world: &mut World| {
             world.remove_resource::<R>();
         })
+    }
+
+    pub fn on<E>(&mut self, handler: impl FnMut(&mut World, &E) + Send + Sync + 'static)
+    where
+        E: Event,
+    {
+        self.queue.push(move |world: &mut World| {
+            world.on::<E>(handler);
+        });
+    }
+
+    pub fn emit<E: Event>(&mut self, event: E) {
+        self.queue.push(|world: &mut World| {
+            world.emit(event);
+        });
     }
 }
 

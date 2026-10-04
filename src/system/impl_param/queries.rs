@@ -69,40 +69,106 @@ impl_query_data_tuple!(D0, D1, D2, D3);
 impl_query_data_tuple!(D0, D1, D2, D3, D4);
 impl_query_data_tuple!(D0, D1, D2, D3, D4, D5);
 
-pub struct Query<'w, D: QueryData> {
-    world: UnsafeWorldCell<'w>,
-    marker: PhantomData<fn() -> D>,
+pub trait QueryFilter {
+    fn access(access: &mut Access) -> Result<(), AccessError>;
+
+    /// # Safety
+    /// Access must have been validated.
+    unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool;
 }
 
-impl<'w, D: QueryData> Query<'w, D> {
+pub struct With<T>(PhantomData<T>);
+
+impl<T: Component> QueryFilter for With<T> {
+    fn access(_access: &mut Access) -> Result<(), AccessError> {
+        Ok(())
+    }
+
+    unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool {
+        unsafe { world.world().get_component::<T>(entity).is_some() }
+    }
+}
+
+pub struct WithOut<T>(PhantomData<T>);
+
+impl<T: Component> QueryFilter for WithOut<T> {
+    fn access(_access: &mut Access) -> Result<(), AccessError> {
+        Ok(())
+    }
+
+    unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool {
+        unsafe { world.world().get_component::<T>(entity).is_none() }
+    }
+}
+
+impl QueryFilter for () {
+    fn access(_access: &mut Access) -> Result<(), AccessError> {
+        Ok(())
+    }
+
+    unsafe fn matches(_world: UnsafeWorldCell<'_>, _entity: Entity) -> bool {
+        true
+    }
+}
+
+macro_rules! impl_query_filter_tuple {
+    ($($F:ident),*) => {
+        impl<$($F: QueryFilter),*> QueryFilter for ($($F,)*) {
+            fn access(access: &mut Access) -> Result<(), AccessError> {
+                $($F::access(access)?;)*
+                Ok(())
+            }
+
+            unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool {
+                true $(&& unsafe { $F::matches(world, entity) })*
+            }
+        }
+    };
+}
+impl_query_filter_tuple!(F0);
+impl_query_filter_tuple!(F0, F1);
+impl_query_filter_tuple!(F0, F1, F2);
+
+pub struct Query<'w, D: QueryData, F: QueryFilter = ()> {
+    world: UnsafeWorldCell<'w>,
+    marker: PhantomData<fn() -> (D, F)>,
+}
+
+impl<'w, D: QueryData, F: QueryFilter> Query<'w, D, F> {
     pub fn iter(&mut self) -> impl Iterator<Item = D::Item<'_>> {
         let world = self.world;
-        // SAFETY: access is already verified.
-        let entities = unsafe { world.world().entities() };
+        let entities: Vec<Entity> = unsafe { world.world().entities().iter().collect() };
+
         entities
-            .iter()
+            .into_iter()
+            .filter(move |&entity| unsafe { F::matches(world, entity) })
             .filter_map(move |entity| unsafe { D::fetch(world, entity) })
     }
 
     pub fn get(&mut self, entity: Entity) -> Option<D::Item<'_>> {
+        if !unsafe { F::matches(self.world, entity) } {
+            return None;
+        }
         unsafe { D::fetch(self.world, entity) }
     }
 }
 
-impl<D: QueryData + 'static> SystemParam for Query<'_, D> {
+impl<D: QueryData + 'static, F: QueryFilter + 'static> SystemParam for Query<'_, D, F> {
     type State = ();
-    type Item<'w> = Query<'w, D>;
+    type Item<'w> = Query<'w, D, F>;
 
     fn init_state(_world: &mut World) -> Self::State {}
 
     fn access(_state: &Self::State, access: &mut Access) -> Result<(), AccessError> {
-        D::access(access)
+        D::access(access)?;
+        F::access(access)?;
+        Ok(())
     }
 
     unsafe fn get_param<'w>(
         _state: &'w mut Self::State,
         world: UnsafeWorldCell<'w>,
-    ) -> Query<'w, D> {
+    ) -> Query<'w, D, F> {
         Query {
             world,
             marker: PhantomData,

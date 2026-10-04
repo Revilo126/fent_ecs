@@ -25,12 +25,15 @@ fn main() {
 
     let mut print_schedule = Schedule::default();
     print_schedule.insert_system(print_text);
+    print_schedule.initialize(&mut world).unwrap();
 
     let mut input_schedule = Schedule::default();
     input_schedule.insert_system(get_input);
+    input_schedule.initialize(&mut world).unwrap();
 
     let mut check_schedule = Schedule::default();
     check_schedule.insert_system(check_guess);
+    check_schedule.initialize(&mut world).unwrap();
 
     loop {
         print_schedule.run(&mut world);

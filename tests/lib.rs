@@ -12,7 +12,11 @@ mod test {
             storage::sparse_set::SparseStorage,
         },
         schedule::Schedule,
-        system::impl_param::{ResMut, command::Commands, queries::Query},
+        system::impl_param::{
+            ResMut,
+            command::Commands,
+            queries::{Query, WithOut},
+        },
         world::World,
     };
 
@@ -226,6 +230,9 @@ mod test {
         #[derive(Component)]
         struct TestComp(u32);
 
+        #[derive(Component)]
+        struct NotCounted;
+
         let mut world = World::default();
 
         let a = world.spawn();
@@ -234,7 +241,11 @@ mod test {
         let b = world.spawn();
         world.insert_component(b, TestComp(5));
 
-        fn query_system(mut q: Query<&TestComp>) {
+        let c = world.spawn();
+        world.insert_component(c, TestComp(5));
+        world.insert_component(c, NotCounted);
+
+        fn query_system(mut q: Query<&TestComp, WithOut<NotCounted>>) {
             let mut tot = 0;
 
             for i in q.iter() {
@@ -260,13 +271,9 @@ mod test {
         }
 
         fn spawn_system(mut cmd: Commands) {
-            cmd.spawn(|entity, world| {
-                world.insert_component(entity, Pos { x: 1, y: 3 });
-            });
+            cmd.spawn(Pos { x: 1, y: 3 });
 
-            cmd.spawn(|entity, world| {
-                world.insert_component(entity, Pos { x: 3, y: 1 });
-            });
+            cmd.spawn(Pos { x: 3, y: 1 });
         }
 
         fn ensure_system(mut query: Query<&Pos>) {

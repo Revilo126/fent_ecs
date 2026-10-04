@@ -3,6 +3,7 @@
 
 use crate::{component::storage::ComponentStorage, entity::Entity, world::World};
 
+pub mod bundle;
 pub mod identification;
 pub mod resource;
 pub mod storage;
