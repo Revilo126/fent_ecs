@@ -3,7 +3,7 @@
 use crate::{
     component::{Component, bundle::Bundle, resource::Resource},
     entity::Entity,
-    event::Event,
+    event::{Event, handlers::IntoEventHandler},
     system::{
         access::{Access, AccessError},
         system_param::SystemParam,
@@ -79,12 +79,13 @@ impl<'w> Commands<'w> {
         })
     }
 
-    pub fn on<E>(&mut self, handler: impl FnMut(&mut World, &E) + Send + Sync + 'static)
+    pub fn on<E, M>(&mut self, handler: impl IntoEventHandler<E, M> + Send + Sync + 'static)
     where
         E: Event,
+        M: 'static,
     {
         self.queue.push(move |world: &mut World| {
-            world.on::<E>(handler);
+            world.on(handler);
         });
     }
 

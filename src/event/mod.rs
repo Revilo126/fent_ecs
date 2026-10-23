@@ -1,15 +1,8 @@
 //! Events can respond to certain triggers from systems.
 
-use std::{any::Any, marker::PhantomData};
+use crate::event::handlers::ErasedHandler;
 
-use crate::{
-    event::{
-        handlers::{ErasedHandler, TypedHandler},
-        identification::event_id,
-    },
-    world::World,
-};
-
+pub(crate) mod function_handlers;
 pub(crate) mod handlers;
 pub(crate) mod identification;
 
@@ -21,40 +14,25 @@ pub struct Events {
 }
 
 impl Events {
-    pub fn on<E, F>(&mut self, handler: F)
-    where
-        E: Event,
-        F: FnMut(&mut World, &E) + 'static,
-    {
-        let id = event_id::<E>();
-
-        let handler = TypedHandler {
-            function: handler,
-            _event: PhantomData::<E>,
-        };
-
+    pub(crate) fn register(&mut self, id: usize, handler: Box<dyn ErasedHandler>) {
         if self.handlers.len() <= id {
             self.handlers.resize_with(id + 1, Vec::new);
         }
-
-        self.handlers[id].push(Box::new(handler));
+        self.handlers[id].push(handler);
     }
 
-    pub fn emit<E: Event>(&mut self, world: &mut World, event: E) {
-        let id = event_id::<E>();
+    pub(crate) fn take(&mut self, id: usize) -> Vec<Box<dyn ErasedHandler>> {
+        self.handlers
+            .get_mut(id)
+            .map(std::mem::take)
+            .unwrap_or_default()
+    }
 
-        if id >= self.handlers.len() {
-            return;
+    pub(crate) fn restore(&mut self, id: usize, mut handlers: Vec<Box<dyn ErasedHandler>>) {
+        if self.handlers.len() <= id {
+            self.handlers.resize_with(id + 1, Vec::new);
         }
-
-        let event = &event as &dyn Any;
-
-        let mut handlers = std::mem::take(&mut self.handlers[id]);
-
-        for handler in &mut handlers {
-            handler.call(world, event);
-        }
-
+        handlers.append(&mut self.handlers[id]);
         self.handlers[id] = handlers;
     }
 }

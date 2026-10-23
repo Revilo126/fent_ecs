@@ -15,7 +15,7 @@ mod test {
         system::impl_param::{
             ResMut,
             command::Commands,
-            queries::{Query, WithOut},
+            queries::{Query, Without},
         },
         world::World,
     };
@@ -216,7 +216,7 @@ mod test {
         let total = Arc::new(AtomicUsize::new(0));
         let total_for_handler = Arc::clone(&total);
 
-        world.on::<TestEvent>(move |_world, event| {
+        world.on(move |event: &TestEvent| {
             total_for_handler.fetch_add(event.value, Ordering::SeqCst);
         });
 
@@ -245,7 +245,7 @@ mod test {
         world.insert_component(c, TestComp(5));
         world.insert_component(c, NotCounted);
 
-        fn query_system(mut q: Query<&TestComp, WithOut<NotCounted>>) {
+        fn query_system(mut q: Query<&TestComp, Without<NotCounted>>) {
             let mut tot = 0;
 
             for i in q.iter() {

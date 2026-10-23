@@ -46,6 +46,18 @@ impl<T: Component> QueryData for &mut T {
     }
 }
 
+impl QueryData for Entity {
+    type Item<'w> = Entity;
+
+    fn access(_access: &mut Access) -> Result<(), AccessError> {
+        Ok(())
+    }
+
+    unsafe fn fetch<'w>(_world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Entity> {
+        Some(entity)
+    }
+}
+
 macro_rules! impl_query_data_tuple {
     ($($D:ident),*) => {
         impl<$($D: QueryData),*> QueryData for ($($D,)*) {
@@ -89,9 +101,9 @@ impl<T: Component> QueryFilter for With<T> {
     }
 }
 
-pub struct WithOut<T>(PhantomData<T>);
+pub struct Without<T>(PhantomData<T>);
 
-impl<T: Component> QueryFilter for WithOut<T> {
+impl<T: Component> QueryFilter for Without<T> {
     fn access(_access: &mut Access) -> Result<(), AccessError> {
         Ok(())
     }

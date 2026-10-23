@@ -71,7 +71,6 @@ mod test {
         schedule.insert_system(test_system);
 
         schedule.initialize(&mut world).unwrap();
-
         schedule.run(&mut world);
     }
 }

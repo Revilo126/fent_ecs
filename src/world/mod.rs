@@ -1,9 +1,6 @@
 //! Worlds are the object in charge of storing entities and components.
 
-use std::{
-    any::Any,
-    sync::atomic::{AtomicUsize, Ordering},
-};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::{
     component::{
@@ -12,7 +9,12 @@ use crate::{
         storage::{ComponentStorage, Components},
     },
     entity::{Entities, Entity},
-    event::{Event, Events, identification::event_id},
+    event::{
+        Event, Events,
+        handlers::{ErasedHandler, IntoEventHandler, TypedHandler},
+        identification::event_id,
+    },
+    system::access::Access,
 };
 
 pub(crate) mod unsafe_world_cell;
@@ -253,28 +255,25 @@ impl World {
         self.resources.remove::<R>();
     }
 
-    /// Schedules an EventHandler to run on an [`Event`]
-    #[inline]
-    pub fn on<E>(&mut self, handler: impl FnMut(&mut World, &E) + 'static)
-    where
-        E: Event,
-    {
-        self.events.on::<E, _>(handler);
+    pub fn on<E: Event, M: 'static>(&mut self, handler: impl IntoEventHandler<E, M>) {
+        let mut typed = TypedHandler::<E> {
+            handler: Box::new(handler.into_event_handler()),
+        };
+        typed.initialize(self);
+        typed.access(&mut Access::default()).unwrap();
+        self.events.register(event_id::<E>(), Box::new(typed));
     }
 
-    /// Emits an [`Event`] and runs its handlers
-    #[inline]
     pub fn emit<E: Event>(&mut self, event: E) {
         let id = event_id::<E>();
-
-        let mut handlers = std::mem::take(&mut self.events.handlers[id]);
-        let event = &event as &dyn Any;
+        let mut handlers = self.events.take(id);
 
         for handler in &mut handlers {
-            handler.call(self, event);
+            handler.call(self, &event);
+            handler.apply(self);
         }
 
-        self.events.handlers[id] = handlers;
+        self.events.restore(id, handlers);
     }
 }
 
