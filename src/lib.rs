@@ -8,8 +8,8 @@
 //! cargo run --example multiple_schedules
 //! ```
 
-// Storage of ECS object
 pub mod event;
+pub mod message;
 pub mod schedule;
 pub mod world;
 

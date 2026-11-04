@@ -8,6 +8,7 @@ use crate::{
 };
 
 pub mod access;
+pub mod chain_system;
 pub mod function_system;
 pub mod impl_param;
 pub mod system_param;

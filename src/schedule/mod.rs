@@ -14,6 +14,10 @@ pub struct Schedule {
 }
 
 impl Schedule {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn insert_system<S, M>(&mut self, sys: S) -> &mut Self
     where
         S: IntoSystem<M>,

@@ -5,17 +5,21 @@ mod test {
         atomic::{AtomicUsize, Ordering},
     };
 
-    use fent_derive::{Component, Event, Resource};
+    use fent_derive::{Component, Event, Message, Resource};
     use fent_ecs::{
         component::{
             identification::{component_id, resource_id},
             storage::sparse_set::SparseStorage,
         },
         schedule::Schedule,
-        system::impl_param::{
-            ResMut,
-            command::Commands,
-            queries::{Query, Without},
+        system::{
+            chain_system::IntoSystemTuple,
+            impl_param::{
+                Local, ResMut,
+                command::Commands,
+                messages::{MessageReader, MessageWriter},
+                queries::{Query, Without},
+            },
         },
         world::World,
     };
@@ -245,7 +249,7 @@ mod test {
         world.insert_component(c, TestComp(5));
         world.insert_component(c, NotCounted);
 
-        fn query_system(mut q: Query<&TestComp, Without<NotCounted>>) {
+        fn query_system(q: Query<&TestComp, Without<NotCounted>>) {
             let mut tot = 0;
 
             for i in q.iter() {
@@ -276,7 +280,7 @@ mod test {
             cmd.spawn(Pos { x: 3, y: 1 });
         }
 
-        fn ensure_system(mut query: Query<&Pos>) {
+        fn ensure_system(query: Query<&Pos>) {
             let mut tot = (0, 0);
 
             for i in query.iter() {
@@ -300,6 +304,34 @@ mod test {
 
         let mut schedule = Schedule::default();
         schedule.insert_system(ensure_system);
+
+        schedule.initialize(&mut world).unwrap();
+        schedule.run(&mut world);
+    }
+
+    #[test]
+    fn message_sending_reading() {
+        #[derive(Message)]
+        struct TestMessage {
+            _a: usize,
+        }
+
+        fn send_message(mut writer: MessageWriter<TestMessage>) {
+            writer.write(TestMessage { _a: 4 });
+        }
+
+        fn read_message(mut reader: MessageReader<TestMessage>, mut recieved: Local<bool>) {
+            for _mes in reader.read() {
+                *recieved = true;
+            }
+
+            assert!(*recieved);
+        }
+
+        let mut world = World::default();
+        let mut schedule = Schedule::default();
+
+        schedule.insert_system((send_message, read_message).chain());
 
         schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);

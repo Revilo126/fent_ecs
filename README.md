@@ -4,10 +4,6 @@
 
 Fent ECS is purpose built for my own needs, I will support any one else who uses it though.
 
-## Why is it?
-
-Why not?
-
 # Example
 
 ```rust

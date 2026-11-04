@@ -43,6 +43,11 @@ impl Default for World {
 }
 
 impl World {
+    /// Returns a newly-created [`World`]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Returns this [`World`]'s [`WorldId`]
     #[inline]
     pub fn id(&self) -> WorldId {
@@ -175,10 +180,11 @@ impl World {
             return None;
         }
 
-        self.components
-            .get::<T::Storage>()
-            .unwrap()
-            .get(entity.index())
+        if let Some(storage) = self.components.get::<T::Storage>() {
+            return storage.get(entity.index());
+        }
+
+        None
     }
 
     /// Returns a mutable [`Component`] for an [`Entity`]
@@ -192,7 +198,7 @@ impl World {
         }
 
         self.components
-            .get_mut::<T::Storage>()
+            .get_mut_or_insert::<T::Storage>()
             .unwrap()
             .get_mut(entity.index())
     }

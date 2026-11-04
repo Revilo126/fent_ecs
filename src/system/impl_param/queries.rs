@@ -58,6 +58,11 @@ impl QueryData for Entity {
     }
 }
 
+pub trait ReadOnlyQueryData: QueryData {}
+
+impl<T: Component> ReadOnlyQueryData for &T {}
+impl ReadOnlyQueryData for Entity {}
+
 macro_rules! impl_query_data_tuple {
     ($($D:ident),*) => {
         impl<$($D: QueryData),*> QueryData for ($($D,)*) {
@@ -72,6 +77,8 @@ macro_rules! impl_query_data_tuple {
                 Some(($(unsafe { $D::fetch(world, entity)? },)*))
             }
         }
+
+        impl<$($D: ReadOnlyQueryData),*> ReadOnlyQueryData for ($($D,)*) {}
     };
 }
 impl_query_data_tuple!(D0);
@@ -147,7 +154,7 @@ pub struct Query<'w, D: QueryData, F: QueryFilter = ()> {
 }
 
 impl<'w, D: QueryData, F: QueryFilter> Query<'w, D, F> {
-    pub fn iter(&mut self) -> impl Iterator<Item = D::Item<'_>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = D::Item<'_>> {
         let world = self.world;
         let entities: Vec<Entity> = unsafe { world.world().entities().iter().collect() };
 
@@ -162,6 +169,18 @@ impl<'w, D: QueryData, F: QueryFilter> Query<'w, D, F> {
             return None;
         }
         unsafe { D::fetch(self.world, entity) }
+    }
+}
+
+impl<'w, D: ReadOnlyQueryData, F: QueryFilter> Query<'w, D, F> {
+    pub fn iter(&self) -> impl Iterator<Item = D::Item<'w>> + '_ {
+        let world = self.world;
+        let entities: Vec<Entity> = unsafe { world.world().entities().iter().collect() };
+
+        entities
+            .into_iter()
+            .filter(move |&entity| unsafe { F::matches(world, entity) })
+            .filter_map(move |entity| unsafe { D::fetch(world, entity) })
     }
 }
 

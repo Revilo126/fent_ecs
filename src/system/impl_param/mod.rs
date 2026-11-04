@@ -12,6 +12,7 @@ use crate::{
 };
 
 pub mod command;
+pub mod messages;
 pub mod queries;
 
 pub struct Res<'w, T: 'static + Resource> {

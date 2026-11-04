@@ -120,3 +120,17 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
     }
     .into()
 }
+
+#[proc_macro_derive(Message)]
+pub fn derive_message(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    let name = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+
+    quote! {
+        impl #impl_generics fent_ecs::message::Message
+            for #name #ty_generics #where_clause {}
+    }
+    .into()
+}

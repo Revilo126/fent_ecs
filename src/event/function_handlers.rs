@@ -94,10 +94,8 @@ macro_rules! impl_event_handler_function {
         where
             E: Event,
             Func: Send + Sync + 'static,
-            for<'e, 'w> Func: FnMut(
-                &'e E
-                $(, ParamItem<'w, $P>)*
-            ),
+            for<'e> Func: FnMut(&'e E $(, $P)*),
+            for<'e, 'w> Func: FnMut(&'e E $(, ParamItem<'w, $P>)*),
         {
             type Param = ($($P,)*);
 
