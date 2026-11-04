@@ -17,9 +17,6 @@ members = ["fent_derive"]
 # Internal
 fent_derive = { path = "fent_derive", version = "0.1.1" }
 
-# External
-log = "0.4.34"
-
 [dev-dependencies]
 criterion = "0.8.2"
 

@@ -48,10 +48,7 @@ impl Resources {
 
         if self.resources[id].is_none() {
             self.resources[id] = Some(Box::new(resource));
-            return;
         }
-
-        log::error!("Tried to insert a resource when already existing!");
     }
 
     pub fn get<R>(&self) -> Option<&R>
@@ -88,8 +85,6 @@ impl Resources {
 
         if let Some(resource) = self.resources.get_mut(id) {
             *resource = None;
-        } else {
-            log::warn!("Tried removing a non-existent resource!");
         }
     }
 }
