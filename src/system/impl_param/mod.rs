@@ -6,6 +6,7 @@ use crate::{
     component::resource::Resource,
     system::{
         access::{Access, AccessError},
+        meta::SystemMeta,
         system_param::SystemParam,
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
@@ -13,6 +14,7 @@ use crate::{
 
 pub mod command;
 pub mod messages;
+pub mod non_send;
 pub mod queries;
 
 pub struct Res<'w, T: 'static + Resource> {
@@ -45,7 +47,7 @@ impl<T: 'static + Resource> SystemParam for Res<'_, T> {
     type State = ();
     type Item<'w> = Res<'w, T>;
 
-    fn init_state(_world: &mut World) -> Self::State {}
+    fn init_state(_world: &mut World, _meta: &mut SystemMeta) -> Self::State {}
 
     fn access(_state: &Self::State, access: &mut Access) -> Result<(), AccessError> {
         access.read::<T>()
@@ -67,7 +69,7 @@ impl<T: 'static + Resource> SystemParam for ResMut<'_, T> {
     type State = ();
     type Item<'w> = ResMut<'w, T>;
 
-    fn init_state(_world: &mut World) -> Self::State {}
+    fn init_state(_world: &mut World, _meta: &mut SystemMeta) -> Self::State {}
 
     fn access(_state: &Self::State, access: &mut Access) -> Result<(), AccessError> {
         access.write::<T>()
@@ -110,7 +112,7 @@ impl<T: Default + Send + Sync + 'static> SystemParam for Local<'_, T> {
     type State = T;
     type Item<'w> = Local<'w, T>;
 
-    fn init_state(_world: &mut World) -> Self::State {
+    fn init_state(_world: &mut World, _meta: &mut SystemMeta) -> Self::State {
         T::default()
     }
 

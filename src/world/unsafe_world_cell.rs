@@ -26,3 +26,10 @@ impl<'world> UnsafeWorldCell<'world> {
         unsafe { &mut *self.world }
     }
 }
+
+// SAFETY: The scheduler only shares this handle among systems in a stage
+// whose declared accesses have been proven non-conflicting. Systems can
+// access world data only through APIs that enforce those declarations.
+// The world remains alive and is not otherwise accessed until the stage joins.
+unsafe impl Send for UnsafeWorldCell<'_> {}
+unsafe impl Sync for UnsafeWorldCell<'_> {}

@@ -8,7 +8,7 @@ use std::any::Any;
 use crate::{component::identification::resource_id, world::World};
 
 // Resource trait
-pub trait Resource: Any {
+pub trait Resource: Send + Sync + Any {
     fn on_add(&self) -> Option<ResourceAction> {
         None
     }

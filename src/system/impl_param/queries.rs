@@ -7,6 +7,7 @@ use crate::{
     entity::Entity,
     system::{
         access::{Access, AccessError},
+        meta::SystemMeta,
         system_param::SystemParam,
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
@@ -188,7 +189,7 @@ impl<D: QueryData + 'static, F: QueryFilter + 'static> SystemParam for Query<'_,
     type State = ();
     type Item<'w> = Query<'w, D, F>;
 
-    fn init_state(_world: &mut World) -> Self::State {}
+    fn init_state(_world: &mut World, _meta: &mut SystemMeta) -> Self::State {}
 
     fn access(_state: &Self::State, access: &mut Access) -> Result<(), AccessError> {
         D::access(access)?;

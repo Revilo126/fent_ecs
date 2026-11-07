@@ -1,22 +1,17 @@
+//! This example demonstrates that the use of 2 or more shedules can be useful.
+//!
+//! Multiple schedules can be used to make sure certain tasks happen at the right time, here it's
+//! used so the systems happen in this order: print_text, get_input, check_guess.
+//!
+//! # Note
+//!
+//! Yes the test is stupid.
+
 use std::io::{self, Write};
 
-use fent_derive::Resource;
-use fent_ecs::{
-    schedule::Schedule,
-    system::impl_param::{Res, ResMut},
-    world::World,
-};
+use fent_ecs::prelude::*;
 
 const PASSWORD: &str = "Hello12";
-
-/// This example demonstrates that the use of 2 or more shedules can be useful.
-///
-/// Multiple schedules can be used to make sure certain tasks happen at the right time, here it's
-/// used so the systems happen in this order: print_text, get_input, check_guess.
-///
-/// # Note
-///
-/// Yes the test is stupid.
 fn main() {
     let mut world = World::default();
 

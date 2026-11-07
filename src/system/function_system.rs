@@ -4,6 +4,7 @@ use crate::{
     system::{
         IntoSystem, System,
         access::{Access, AccessError},
+        meta::SystemMeta,
         system_param::{ParamItem, SystemParam},
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
@@ -21,6 +22,7 @@ where
     function: F,
     state: Option<<F::Param as SystemParam>::State>,
     marker: PhantomData<fn() -> Marker>,
+    meta: SystemMeta,
 }
 
 impl<F, Marker: 'static> System for FunctionSystem<F, Marker>
@@ -28,7 +30,7 @@ where
     F: SystemParamFunction<Marker>,
 {
     fn initialize(&mut self, world: &mut World) {
-        self.state = Some(F::Param::init_state(world));
+        self.state = Some(F::Param::init_state(world, &mut self.meta));
     }
 
     fn access(&self, access: &mut Access) -> Result<(), AccessError> {
@@ -49,6 +51,14 @@ where
     fn apply(&mut self, world: &mut World) {
         F::Param::apply(self.state.as_mut().unwrap(), world);
     }
+
+    fn meta(&self) -> &SystemMeta {
+        &self.meta
+    }
+
+    fn meta_mut(&mut self) -> &mut SystemMeta {
+        &mut self.meta
+    }
 }
 
 impl<F, Marker> IntoSystem<Marker> for F
@@ -63,6 +73,7 @@ where
             function: self,
             state: None,
             marker: PhantomData,
+            meta: SystemMeta::new("FunctionSystem"),
         }
     }
 }
@@ -74,8 +85,8 @@ macro_rules! impl_system_param_tuple {
             type State = ($($P::State,)*);
             type Item<'w> = ($($P::Item<'w>,)*);
 
-            fn init_state(world: &mut World) -> Self::State {
-                ($($P::init_state(world),)*)
+            fn init_state(world: &mut World, meta: &mut SystemMeta) -> Self::State {
+                ($($P::init_state(world, meta),)*)
             }
 
             fn access(state: &Self::State, access: &mut Access) -> Result<(), AccessError> {

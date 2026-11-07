@@ -17,6 +17,8 @@ pub mod component;
 pub mod entity;
 pub mod system;
 
+pub mod prelude;
+
 #[cfg(test)]
 mod test {
     use crate::{entity::Entities, schedule::Schedule, world::World};

@@ -8,7 +8,7 @@ pub mod sparse_set;
 pub mod vec;
 
 /// The trait to be implemented by each component storage.
-pub trait ComponentStorage: 'static + Any + Default {
+pub trait ComponentStorage: Send + Sync + 'static + Any + Default {
     type Component;
 
     fn get(&self, index: usize) -> Option<&Self::Component>;
@@ -17,7 +17,7 @@ pub trait ComponentStorage: 'static + Any + Default {
     fn remove(&mut self, index: usize) -> Option<Self::Component>;
 }
 
-pub trait ErasedComponentStorage: Any {
+pub trait ErasedComponentStorage: Send + Sync + Any {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 
@@ -26,7 +26,7 @@ pub trait ErasedComponentStorage: Any {
 
 impl<T> ErasedComponentStorage for T
 where
-    T: ComponentStorage,
+    T: ComponentStorage + Send + Sync,
 {
     fn as_any(&self) -> &dyn Any {
         self
@@ -54,7 +54,7 @@ pub struct Components {
 impl Components {
     fn ensure_storage<S>(&mut self) -> usize
     where
-        S: ComponentStorage + Default,
+        S: ComponentStorage + Default + Send + Sync,
     {
         let id = component_id::<S::Component>();
 
@@ -71,14 +71,14 @@ impl Components {
 
     pub fn insert<S>(&mut self)
     where
-        S: ComponentStorage + Default,
+        S: ComponentStorage + Default + Send + Sync,
     {
         let _ = self.ensure_storage::<S>();
     }
 
     pub fn get_or_insert<S>(&mut self) -> Option<&S>
     where
-        S: ComponentStorage + Default,
+        S: ComponentStorage + Default + Send + Sync,
     {
         let id = self.ensure_storage::<S>();
 
@@ -91,7 +91,7 @@ impl Components {
 
     pub fn get_mut_or_insert<S>(&mut self) -> Option<&mut S>
     where
-        S: ComponentStorage + Default,
+        S: ComponentStorage + Default + Send + Sync,
     {
         let id = self.ensure_storage::<S>();
 
@@ -104,7 +104,7 @@ impl Components {
 
     pub fn get<S>(&self) -> Option<&S>
     where
-        S: ComponentStorage,
+        S: ComponentStorage + Send + Sync,
     {
         let id = component_id::<S::Component>();
 
@@ -117,7 +117,7 @@ impl Components {
 
     pub fn get_mut<S>(&mut self) -> Option<&mut S>
     where
-        S: ComponentStorage,
+        S: ComponentStorage + Send + Sync,
     {
         let id = component_id::<S::Component>();
 

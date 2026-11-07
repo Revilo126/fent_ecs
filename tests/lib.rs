@@ -336,37 +336,4 @@ mod test {
         schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
     }
-
-    #[test]
-    fn readme_example() {
-        let mut world = World::default();
-
-        #[derive(Resource)]
-        struct Origin {
-            x: u32,
-            y: u32,
-        }
-
-        fn system(mut o: ResMut<Origin>) {
-            if o.x != 0 || o.y != 0 {
-                o.x = 0;
-                o.y = 0;
-            }
-        }
-
-        world.insert_resource(Origin { x: 1, y: 4 });
-
-        let mut schedule = Schedule::default();
-        schedule.insert_system(system);
-
-        schedule.initialize(&mut world).unwrap();
-        schedule.run(&mut world);
-
-        let Some(o) = world.get_resource::<Origin>() else {
-            panic!("Failed to retrieve \"Origin\" resource!");
-        };
-
-        assert_eq!(o.x, 0);
-        assert_eq!(o.y, 0);
-    }
 }

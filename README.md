@@ -7,6 +7,7 @@ Fent ECS is purpose built for my own needs, I will support any one else who uses
 # Example
 
 ```rust
+use fent_ecs::prelude::*;
 
 let mut world = World::default();
 
@@ -31,9 +32,9 @@ schedule.insert_system(system);
 schedule.initialize(&mut world).unwrap();
 schedule.run(&mut world);
 
-let Some(o) = world.get_resource::<Origin>() else {
-    panic!("Failed to retrieve \"Origin\" resource!");
-};
+let o = world
+    .get_resource::<Origin>()
+    .expect("Failed to retrieve \"Origin\" resource");
 
 assert_eq!(o.x, 0);
 assert_eq!(o.y, 0);

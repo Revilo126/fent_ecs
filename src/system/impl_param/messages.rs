@@ -4,6 +4,7 @@ use crate::{
     message::{Message, Messages},
     system::{
         access::{Access, AccessError},
+        meta::SystemMeta,
         system_param::SystemParam,
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
@@ -27,7 +28,7 @@ impl<M: Message> SystemParam for MessageWriter<'_, M> {
     type State = ();
     type Item<'w> = MessageWriter<'w, M>;
 
-    fn init_state(world: &mut World) -> Self::State {
+    fn init_state(world: &mut World, _meta: &mut SystemMeta) -> Self::State {
         if world.get_resource::<Messages<M>>().is_none() {
             let mes: Messages<M> = Messages { queue: Vec::new() };
             world.insert_resource(mes);
@@ -71,7 +72,7 @@ impl<M: Message> SystemParam for MessageReader<'_, M> {
     type State = usize;
     type Item<'w> = MessageReader<'w, M>;
 
-    fn init_state(world: &mut World) -> Self::State {
+    fn init_state(world: &mut World, _meta: &mut SystemMeta) -> Self::State {
         if world.get_resource::<Messages<M>>().is_none() {
             let mes: Messages<M> = Messages { queue: Vec::new() };
 

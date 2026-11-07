@@ -7,6 +7,7 @@ use crate::{
     },
     system::{
         access::{Access, AccessError},
+        meta::SystemMeta,
         system_param::{ParamItem, SystemParam},
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
@@ -51,7 +52,7 @@ where
     Marker: 'static,
 {
     fn initialize(&mut self, world: &mut World) {
-        self.state = Some(F::Param::init_state(world));
+        self.state = Some(F::Param::init_state(world, &mut SystemMeta::default()));
     }
 
     fn access(&self, access: &mut Access) -> Result<(), AccessError> {

@@ -33,7 +33,7 @@ pub trait IntoEventHandler<E: Event, Marker = ()> {
     fn into_event_handler(self) -> Self::Handler;
 }
 
-pub trait ErasedHandler {
+pub trait ErasedHandler: Send + Sync {
     fn initialize(&mut self, world: &mut World);
     fn access(&self, access: &mut Access) -> Result<(), AccessError>;
     fn call(&mut self, world: &mut World, event: &dyn Any);

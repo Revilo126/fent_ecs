@@ -1,7 +1,10 @@
 //! System parameters are the tuple in which is given to systems when running.
 
 use crate::{
-    system::access::{Access, AccessError},
+    system::{
+        access::{Access, AccessError},
+        meta::SystemMeta,
+    },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
 };
 
@@ -9,7 +12,7 @@ pub trait SystemParam {
     type State: Send + Sync + 'static;
     type Item<'w>: SystemParam<State = Self::State>;
 
-    fn init_state(world: &mut World) -> Self::State;
+    fn init_state(world: &mut World, meta: &mut SystemMeta) -> Self::State;
     fn access(state: &Self::State, access: &mut Access) -> Result<(), AccessError>;
 
     /// # Safety

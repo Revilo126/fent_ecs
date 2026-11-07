@@ -3,7 +3,10 @@
 //! In Fent ECS they are simply functions
 
 use crate::{
-    system::access::{Access, AccessError},
+    system::{
+        access::{Access, AccessError},
+        meta::SystemMeta,
+    },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
 };
 
@@ -11,6 +14,7 @@ pub mod access;
 pub mod chain_system;
 pub mod function_system;
 pub mod impl_param;
+pub mod meta;
 pub mod system_param;
 
 pub trait System: Send + Sync + 'static {
@@ -29,6 +33,9 @@ pub trait System: Send + Sync + 'static {
 
     /// Runs after the system is finished, useful for applying actions after completion.
     fn apply(&mut self, world: &mut World);
+
+    fn meta(&self) -> &SystemMeta;
+    fn meta_mut(&mut self) -> &mut SystemMeta;
 }
 
 pub trait IntoSystem<Marker = ()> {

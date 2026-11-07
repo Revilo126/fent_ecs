@@ -4,6 +4,7 @@ use crate::{
     system::{
         IntoSystem, System,
         access::{Access, AccessError},
+        meta::{SystemMeta, ThreadAccess::AnyThread},
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
 };
@@ -84,6 +85,10 @@ pub trait IntoSystemTuple<Markers> {
     {
         ChainedSystem {
             systems: self.into_system_tuple(),
+            meta: SystemMeta {
+                name: "ChainedSystem",
+                thread_access: AnyThread,
+            },
         }
     }
 }
@@ -121,6 +126,7 @@ impl_into_system_tuple!(A: a: MA: SA, B: b: MB: SB, C: c: MC: SC, D: d: MD: SD);
 
 pub struct ChainedSystem<S> {
     systems: S,
+    meta: SystemMeta,
 }
 
 impl<S: SystemTuple> System for ChainedSystem<S> {
@@ -146,6 +152,14 @@ impl<S: SystemTuple> System for ChainedSystem<S> {
 
     fn apply(&mut self, world: &mut World) {
         self.systems.apply(world);
+    }
+
+    fn meta(&self) -> &SystemMeta {
+        &self.meta
+    }
+
+    fn meta_mut(&mut self) -> &mut SystemMeta {
+        &mut self.meta
     }
 }
 

@@ -6,6 +6,7 @@ use crate::{
     event::{Event, handlers::IntoEventHandler},
     system::{
         access::{Access, AccessError},
+        meta::SystemMeta,
         system_param::SystemParam,
     },
     world::{World, unsafe_world_cell::UnsafeWorldCell},
@@ -100,7 +101,7 @@ impl SystemParam for Commands<'_> {
     type State = CommandQueue;
     type Item<'w> = Commands<'w>;
 
-    fn init_state(_world: &mut World) -> Self::State {
+    fn init_state(_world: &mut World, _meta: &mut SystemMeta) -> Self::State {
         CommandQueue::default()
     }
 
