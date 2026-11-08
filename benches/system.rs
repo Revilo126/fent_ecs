@@ -25,7 +25,7 @@ fn benchmark_systems(c: &mut Criterion) {
         });
     });
 
-    schedule.insert_system(increment);
+    schedule.add_system(increment);
     schedule.initialize(&mut world).unwrap();
 
     world.insert_resource(Counter(0));

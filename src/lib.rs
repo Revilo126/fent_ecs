@@ -1,11 +1,15 @@
-//! A Fast ECS Library
+//! Fent ECS is a simple, fast and ergonomic entity component system.
+//!
+//! View the source code on [Github](https://github.com/Revilo126/fent_ecs).
+//! And if you find anything that's worth fixing, send a pull request as all support and help is welcomed.
 //!
 //! # Examples
 //!
-//! Run fent_ecs' examples with:
+//! Run the avaliable examples with the following commands:
 //!
-//! ```text
+//! ```console
 //! cargo run --example multiple_schedules
+//! cargo run --example readme_example # The code seen in the [README.md](https://github.com/Revilo126/fent_ecs?tab=readme-ov-file)
 //! ```
 
 pub mod event;
@@ -21,7 +25,7 @@ pub mod prelude;
 
 #[cfg(test)]
 mod test {
-    use crate::{entity::Entities, schedule::Schedule, world::World};
+    use crate::prelude::*;
 
     #[test]
     fn entity_bulk_alloc_free() {
@@ -70,9 +74,8 @@ mod test {
 
         let mut schedule = Schedule::default();
 
-        schedule.insert_system(test_system);
+        schedule.add_system(test_system);
 
-        schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
     }
 }

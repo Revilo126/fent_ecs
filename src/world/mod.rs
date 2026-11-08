@@ -19,7 +19,8 @@ use crate::{
 
 pub(crate) mod unsafe_world_cell;
 
-/// The World Struct
+/// The World struct containing all [`Entities`], [`Components`], [`Resources`] and other owned
+/// objects.
 pub struct World {
     /// To be able to identify a [`World`] within mass storages
     pub(crate) id: WorldId,
@@ -223,6 +224,15 @@ impl World {
         T::on_remove(entity, self);
     }
 
+    /// Adds a [`Resource`] into the current [`World`]
+    #[inline]
+    pub fn add_resource<R>(&mut self, resource: R)
+    where
+        R: Resource,
+    {
+        self.resources.add(resource);
+    }
+
     /// Inserts a [`Resource`] into the current [`World`]
     #[inline]
     pub fn insert_resource<R>(&mut self, resource: R)
@@ -289,7 +299,7 @@ pub struct WorldId {
     pub(crate) inner: usize,
 }
 
-/// Tracker of next [`WorldId`]'s avaliable
+// Tracker of next [`WorldId`]'s avaliable
 static NEXT_WORLD_ID: AtomicUsize = AtomicUsize::new(0);
 
 impl Default for WorldId {
@@ -302,6 +312,7 @@ impl Default for WorldId {
 
 impl WorldId {
     /// Returns the [`WorldId`]'s inner integer value
+    #[inline]
     pub fn inner_value(&self) -> usize {
         self.inner
     }

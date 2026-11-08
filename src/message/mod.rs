@@ -1,5 +1,7 @@
 //! Messages module of fent_ecs
 
+use std::any::Any;
+
 use crate::component::resource::Resource;
 
 /// Marker trait for Messages
@@ -10,11 +12,11 @@ pub struct Messages<M: Message> {
 }
 
 impl<T: Message> Resource for Messages<T> {
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 }
@@ -26,18 +28,22 @@ impl<M: Message> Default for Messages<M> {
 }
 
 impl<M: Message> Messages<M> {
+    #[inline]
     pub(crate) fn write(&mut self, message: M) {
         self.queue.push(message);
     }
 
+    #[inline]
     pub(crate) fn iter(&self) -> std::slice::Iter<'_, M> {
         self.queue.iter()
     }
 
+    #[inline]
     pub(crate) fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
 
+    #[inline]
     pub(crate) fn clear(&mut self) {
         self.queue.clear();
     }

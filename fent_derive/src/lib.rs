@@ -28,7 +28,7 @@ pub fn derive_component(input: TokenStream) -> TokenStream {
         .map(|attribute| {
             attribute
                 .parse_args::<Path>()
-                .expect("expected #[on_add(ComponentAction)]")
+                .expect("expected #[on_add(Fn(Entity, &mut World)]")
         });
 
     let on_remove = ast
@@ -38,7 +38,7 @@ pub fn derive_component(input: TokenStream) -> TokenStream {
         .map(|attribute| {
             attribute
                 .parse_args::<Path>()
-                .expect("expected #[on_remove(ComponentAction)]")
+                .expect("expected #[on_remove(Fn(Entity, &mut World)]")
         });
 
     let storage_type = match storage {

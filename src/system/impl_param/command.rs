@@ -43,6 +43,7 @@ pub struct Commands<'w> {
 }
 
 impl<'w> Commands<'w> {
+    #[inline]
     pub fn spawn(&mut self, bundle: impl Bundle) {
         self.queue.push(move |world: &mut World| {
             let entity = world.spawn();
@@ -50,36 +51,42 @@ impl<'w> Commands<'w> {
         });
     }
 
+    #[inline]
     pub fn despawn(&mut self, entity: Entity) {
         self.queue.push(move |world: &mut World| {
             world.despawn(entity);
         });
     }
 
+    #[inline]
     pub fn insert_component<T: Component>(&mut self, entity: Entity, component: T) {
         self.queue.push(move |world: &mut World| {
             world.insert_component(entity, component);
         });
     }
 
+    #[inline]
     pub fn remove_component<T: Component>(&mut self, entity: Entity) {
         self.queue.push(move |world: &mut World| {
             world.remove_component::<T>(entity);
         });
     }
 
+    #[inline]
     pub fn insert_resource<R: Resource + Send + Sync>(&mut self, resource: R) {
         self.queue.push(move |world: &mut World| {
             world.insert_resource(resource);
         });
     }
 
+    #[inline]
     pub fn remove_resource<R: Resource>(&mut self) {
         self.queue.push(move |world: &mut World| {
             world.remove_resource::<R>();
         })
     }
 
+    #[inline]
     pub fn on<E, M>(&mut self, handler: impl IntoEventHandler<E, M> + Send + Sync + 'static)
     where
         E: Event,
@@ -90,6 +97,7 @@ impl<'w> Commands<'w> {
         });
     }
 
+    #[inline]
     pub fn emit<E: Event>(&mut self, event: E) {
         self.queue.push(|world: &mut World| {
             world.emit(event);

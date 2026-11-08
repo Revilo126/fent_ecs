@@ -36,6 +36,25 @@ pub struct Resources {
 }
 
 impl Resources {
+    /// Adds a [`Resource`], if one is already existing it doesn't do anything.
+    ///
+    /// Might remove idk tho
+    pub fn add<R>(&mut self, resource: R)
+    where
+        R: Resource + 'static,
+    {
+        let id = resource_id::<R>();
+
+        if self.resources.len() <= id {
+            self.resources.resize_with(id + 1, || None);
+        }
+
+        if self.resources[id].is_none() {
+            self.resources[id] = Some(Box::new(resource));
+        }
+    }
+
+    /// Insert a [`Resource`]
     pub fn insert<R>(&mut self, resource: R)
     where
         R: Resource + 'static,
@@ -46,6 +65,7 @@ impl Resources {
             self.resources.resize_with(id + 1, || None);
         }
 
+        // TODO: Make it override what was there
         if self.resources[id].is_none() {
             self.resources[id] = Some(Box::new(resource));
         }

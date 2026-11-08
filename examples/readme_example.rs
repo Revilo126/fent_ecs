@@ -24,9 +24,9 @@ fn main() {
     world.insert_resource(Origin { x: 1, y: 4 });
 
     let mut schedule = Schedule::default();
-    schedule.insert_system(reset_origin);
+    schedule.add_system(reset_origin);
 
-    schedule.init_and_run(&mut world);
+    schedule.run(&mut world);
 
     let o = world
         .get_resource::<Origin>()

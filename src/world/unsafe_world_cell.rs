@@ -11,6 +11,7 @@ pub struct UnsafeWorldCell<'world> {
 }
 
 impl<'world> UnsafeWorldCell<'world> {
+    #[inline]
     pub unsafe fn from_world(world: &'world mut World) -> Self {
         Self {
             world,
@@ -18,10 +19,12 @@ impl<'world> UnsafeWorldCell<'world> {
         }
     }
 
+    #[inline]
     pub unsafe fn world(&self) -> &'world World {
         unsafe { &*self.world }
     }
 
+    #[inline]
     pub unsafe fn world_mut(&self) -> &'world mut World {
         unsafe { &mut *self.world }
     }

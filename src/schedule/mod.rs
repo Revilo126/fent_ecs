@@ -39,11 +39,12 @@ impl Default for Schedule {
 }
 
 impl Schedule {
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn insert_system<S, M>(&mut self, sys: S) -> &mut Self
+    pub fn add_system<S, M>(&mut self, sys: S) -> &mut Self
     where
         S: IntoSystem<M>,
     {
@@ -54,6 +55,14 @@ impl Schedule {
         self.initialized = false;
 
         self
+    }
+
+    #[deprecated(since = "0.1.4", note = "Use the preferred 'add_system' method")]
+    pub fn insert_system<S, M>(&mut self, sys: S) -> &mut Self
+    where
+        S: IntoSystem<M>,
+    {
+        self.add_system(sys)
     }
 
     pub fn initialize(&mut self, world: &mut World) -> Result<(), AccessError> {
@@ -104,10 +113,9 @@ impl Schedule {
     }
 
     pub fn run(&mut self, world: &mut World) {
-        assert!(
-            self.initialized,
-            "Schedule must be initialized before running"
-        );
+        if !self.initialized {
+            self.initialize(world).unwrap();
+        }
 
         for stage in &self.stages {
             let (main_thread, parallel): (Vec<_>, Vec<_>) = stage
@@ -139,6 +147,7 @@ impl Schedule {
         }
     }
 
+    #[deprecated(since = "0.1.4", note = "Schedule initializes on the first run")]
     pub fn init_and_run(&mut self, world: &mut World) {
         self.initialize(world).unwrap();
         self.run(world);

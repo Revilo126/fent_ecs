@@ -35,6 +35,18 @@ impl<T: Component> QueryData for &T {
     }
 }
 
+impl<T: Component> QueryData for Option<&T> {
+    type Item<'w> = Option<&'w T>;
+
+    fn access(access: &mut Access) -> Result<(), AccessError> {
+        access.read::<T>()
+    }
+
+    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Self::Item<'w>> {
+        Some(unsafe { world.world().get_component::<T>(entity) })
+    }
+}
+
 impl<T: Component> QueryData for &mut T {
     type Item<'w> = &'w mut T;
 
@@ -44,6 +56,18 @@ impl<T: Component> QueryData for &mut T {
 
     unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<&'w mut T> {
         unsafe { world.world_mut().get_mut_component::<T>(entity) }
+    }
+}
+
+impl<T: Component> QueryData for Option<&mut T> {
+    type Item<'w> = Option<&'w mut T>;
+
+    fn access(access: &mut Access) -> Result<(), AccessError> {
+        access.write::<T>()
+    }
+
+    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Self::Item<'w>> {
+        Some(unsafe { world.world_mut().get_mut_component::<T>(entity) })
     }
 }
 

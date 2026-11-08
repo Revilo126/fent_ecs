@@ -26,7 +26,7 @@ pub trait ErasedComponentStorage: Send + Sync + Any {
 
 impl<T> ErasedComponentStorage for T
 where
-    T: ComponentStorage + Send + Sync,
+    T: ComponentStorage,
 {
     fn as_any(&self) -> &dyn Any {
         self
@@ -54,7 +54,7 @@ pub struct Components {
 impl Components {
     fn ensure_storage<S>(&mut self) -> usize
     where
-        S: ComponentStorage + Default + Send + Sync,
+        S: ComponentStorage + Default,
     {
         let id = component_id::<S::Component>();
 
@@ -71,14 +71,14 @@ impl Components {
 
     pub fn insert<S>(&mut self)
     where
-        S: ComponentStorage + Default + Send + Sync,
+        S: ComponentStorage + Default,
     {
         let _ = self.ensure_storage::<S>();
     }
 
     pub fn get_or_insert<S>(&mut self) -> Option<&S>
     where
-        S: ComponentStorage + Default + Send + Sync,
+        S: ComponentStorage + Default,
     {
         let id = self.ensure_storage::<S>();
 
@@ -91,7 +91,7 @@ impl Components {
 
     pub fn get_mut_or_insert<S>(&mut self) -> Option<&mut S>
     where
-        S: ComponentStorage + Default + Send + Sync,
+        S: ComponentStorage + Default,
     {
         let id = self.ensure_storage::<S>();
 
@@ -104,7 +104,7 @@ impl Components {
 
     pub fn get<S>(&self) -> Option<&S>
     where
-        S: ComponentStorage + Send + Sync,
+        S: ComponentStorage,
     {
         let id = component_id::<S::Component>();
 
@@ -117,7 +117,7 @@ impl Components {
 
     pub fn get_mut<S>(&mut self) -> Option<&mut S>
     where
-        S: ComponentStorage + Send + Sync,
+        S: ComponentStorage,
     {
         let id = component_id::<S::Component>();
 

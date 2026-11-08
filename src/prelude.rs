@@ -5,7 +5,11 @@
 pub use fent_derive::{Component, Event, Message, Resource};
 
 pub use crate::{
-    entity::Entity,
+    component::{
+        identification::{component_id, resource_id},
+        storage::{sparse_set::SparseStorage, vec::VecStorage},
+    },
+    entity::{Entities, Entity},
     schedule::Schedule,
     system::{
         IntoSystem, System,
@@ -14,6 +18,7 @@ pub use crate::{
             Local, Res, ResMut,
             command::Commands,
             messages::{MessageReader, MessageWriter},
+            non_send::NonSendMarker,
             queries::{Query, With, Without},
         },
         system_param::SystemParam,

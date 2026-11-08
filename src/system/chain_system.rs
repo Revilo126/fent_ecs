@@ -24,6 +24,8 @@ pub trait SystemTuple: Send + Sync + 'static {
     unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>);
 
     fn apply(&mut self, world: &mut World);
+
+    fn is_main_thread_only(&self) -> bool;
 }
 
 macro_rules! impl_system_tuple {
@@ -62,6 +64,11 @@ macro_rules! impl_system_tuple {
             fn apply(&mut self, world: &mut World) {
                 let ($($system,)+) = self;
                 $($system.apply(world);)+
+            }
+
+            fn is_main_thread_only(&self) -> bool {
+                let ($($system,)+) = self;
+                false $(|| $system.meta().is_main_thread_only())+
             }
         }
     };
@@ -132,6 +139,10 @@ pub struct ChainedSystem<S> {
 impl<S: SystemTuple> System for ChainedSystem<S> {
     fn initialize(&mut self, world: &mut World) {
         self.systems.initialize(world);
+
+        if self.systems.is_main_thread_only() {
+            self.meta.set_main_thread_only();
+        }
     }
 
     fn run(&mut self, world: &mut World) {

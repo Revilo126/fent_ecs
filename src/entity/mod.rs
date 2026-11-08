@@ -1,5 +1,6 @@
 //! Entities are the basis (of objects) in an ECS library.
-//! In Fent ECS they are simply typed usize integers.
+//!
+//! In Fent ECS they are structs containing their index and generation.
 
 use std::collections::VecDeque;
 
@@ -11,11 +12,13 @@ pub struct Entity {
 }
 
 impl Entity {
+    /// Returns the index of current [`Entity`]
     #[inline]
     pub fn index(&self) -> usize {
         self.idx
     }
 
+    /// Returns the generation of the [`Entity`]
     #[inline]
     pub fn generation(&self) -> usize {
         self.generation
@@ -78,6 +81,29 @@ impl Entities {
             && self.generations.get(idx).copied() == Some(entity.generation)
     }
 
+    /// Returns the youngest (newest) generation alive
+    ///
+    /// If the [`Vec`] of generations or in_use is empty returns a [`None`]
+    pub fn youngest_generation(&self) -> Option<usize> {
+        self.generations
+            .iter()
+            .zip(&self.in_use)
+            .filter_map(|(&generation, &used)| used.then_some(generation))
+            .max()
+    }
+
+    /// Returns the oldest generation alive
+    ///
+    /// If the [`Vec`] of generations or in_use is empty returns a [`None`]
+    pub fn oldest_generation(&self) -> Option<usize> {
+        self.generations
+            .iter()
+            .zip(&self.in_use)
+            .filter_map(|(&generation, &used)| used.then_some(generation))
+            .min()
+    }
+
+    /// Returns an [`Iterator`] over all alive
     pub fn iter(&self) -> impl Iterator<Item = Entity> + '_ {
         self.in_use.iter().enumerate().filter_map(|(i, &used)| {
             used.then_some(Entity {
@@ -85,5 +111,23 @@ impl Entities {
                 generation: self.generations[i],
             })
         })
+    }
+
+    /// Returns a copy of the free id [`VecDeque`]
+    #[inline]
+    pub fn free_ids(&self) -> VecDeque<usize> {
+        self.free.clone()
+    }
+
+    /// Returns a copy of the generations [`Vec`]
+    #[inline]
+    pub fn generations(&self) -> Vec<usize> {
+        self.generations.clone()
+    }
+
+    /// Returns a copy of the entities in use [`Vec`]
+    #[inline]
+    pub fn in_use(&self) -> Vec<bool> {
+        self.in_use.clone()
     }
 }

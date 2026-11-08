@@ -5,24 +5,7 @@ mod test {
         atomic::{AtomicUsize, Ordering},
     };
 
-    use fent_derive::{Component, Event, Message, Resource};
-    use fent_ecs::{
-        component::{
-            identification::{component_id, resource_id},
-            storage::sparse_set::SparseStorage,
-        },
-        schedule::Schedule,
-        system::{
-            chain_system::IntoSystemTuple,
-            impl_param::{
-                Local, ResMut,
-                command::Commands,
-                messages::{MessageReader, MessageWriter},
-                queries::{Query, Without},
-            },
-        },
-        world::World,
-    };
+    use fent_ecs::prelude::*;
 
     #[test]
     fn component_ids() {
@@ -173,9 +156,8 @@ mod test {
         world.insert_resource(ResType { _a: 4 });
 
         let mut schedule = Schedule::default();
-        schedule.insert_system(failed_system);
+        schedule.add_system(failed_system);
 
-        schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
     }
 
@@ -260,9 +242,8 @@ mod test {
         }
 
         let mut schedule = Schedule::default();
-        schedule.insert_system(query_system);
+        schedule.add_system(query_system);
 
-        schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
     }
 
@@ -295,17 +276,15 @@ mod test {
         let mut world = World::default();
 
         let mut schedule = Schedule::default();
-        schedule.insert_system(spawn_system);
+        schedule.add_system(spawn_system);
 
-        schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
 
         drop(schedule);
 
         let mut schedule = Schedule::default();
-        schedule.insert_system(ensure_system);
+        schedule.add_system(ensure_system);
 
-        schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
     }
 
@@ -331,9 +310,8 @@ mod test {
         let mut world = World::default();
         let mut schedule = Schedule::default();
 
-        schedule.insert_system((send_message, read_message).chain());
+        schedule.add_system((send_message, read_message).chain());
 
-        schedule.initialize(&mut world).unwrap();
         schedule.run(&mut world);
     }
 }

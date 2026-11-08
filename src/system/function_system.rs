@@ -123,6 +123,7 @@ macro_rules! impl_system_param_function {
         {
             type Param = ($($P,)*);
 
+            #[allow(clippy::too_many_arguments)]
             fn run(&mut self, param: ParamItem<'_, ($($P,)*)>) {
                 fn call_inner<$($P),*>(mut f: impl FnMut($($P),*), $($P: $P),*) {
                     f($($P),*)
@@ -141,6 +142,9 @@ impl_system_param_tuple!(P0, P1, P2);
 impl_system_param_tuple!(P0, P1, P2, P3);
 impl_system_param_tuple!(P0, P1, P2, P3, P4);
 impl_system_param_tuple!(P0, P1, P2, P3, P4, P5);
+impl_system_param_tuple!(P0, P1, P2, P3, P4, P5, P6);
+impl_system_param_tuple!(P0, P1, P2, P3, P4, P5, P6, P7);
+impl_system_param_tuple!(P0, P1, P2, P3, P4, P5, P6, P7, P8);
 
 impl_system_param_function!();
 impl_system_param_function!(P0);
@@ -149,3 +153,6 @@ impl_system_param_function!(P0, P1, P2);
 impl_system_param_function!(P0, P1, P2, P3);
 impl_system_param_function!(P0, P1, P2, P3, P4);
 impl_system_param_function!(P0, P1, P2, P3, P4, P5);
+impl_system_param_function!(P0, P1, P2, P3, P4, P5, P6);
+impl_system_param_function!(P0, P1, P2, P3, P4, P5, P6, P7);
+impl_system_param_function!(P0, P1, P2, P3, P4, P5, P6, P7, P8);
