@@ -10,7 +10,7 @@ use crate::{
         meta::SystemMeta,
         system_param::SystemParam,
     },
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
+    world::{World, change_detection::Tick, unsafe_world_cell::UnsafeWorldCell},
 };
 
 pub trait QueryData {
@@ -20,7 +20,12 @@ pub trait QueryData {
 
     /// # Safety
     /// Access must have been validated.
-    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Self::Item<'w>>;
+    unsafe fn fetch<'w>(
+        world: UnsafeWorldCell<'w>,
+        entity: Entity,
+        last_run: Tick,
+        this_run: Tick,
+    ) -> Option<Self::Item<'w>>;
 }
 
 impl<T: Component> QueryData for &T {
@@ -30,7 +35,12 @@ impl<T: Component> QueryData for &T {
         access.read::<T>()
     }
 
-    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<&'w T> {
+    unsafe fn fetch<'w>(
+        world: UnsafeWorldCell<'w>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> Option<&'w T> {
         unsafe { world.world().get_component::<T>(entity) }
     }
 }
@@ -42,7 +52,12 @@ impl<T: Component> QueryData for Option<&T> {
         access.read::<T>()
     }
 
-    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Self::Item<'w>> {
+    unsafe fn fetch<'w>(
+        world: UnsafeWorldCell<'w>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> Option<Self::Item<'w>> {
         Some(unsafe { world.world().get_component::<T>(entity) })
     }
 }
@@ -54,7 +69,12 @@ impl<T: Component> QueryData for &mut T {
         access.write::<T>()
     }
 
-    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<&'w mut T> {
+    unsafe fn fetch<'w>(
+        world: UnsafeWorldCell<'w>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> Option<&'w mut T> {
         unsafe { world.world_mut().get_mut_component::<T>(entity) }
     }
 }
@@ -66,7 +86,12 @@ impl<T: Component> QueryData for Option<&mut T> {
         access.write::<T>()
     }
 
-    unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Self::Item<'w>> {
+    unsafe fn fetch<'w>(
+        world: UnsafeWorldCell<'w>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> Option<Self::Item<'w>> {
         Some(unsafe { world.world_mut().get_mut_component::<T>(entity) })
     }
 }
@@ -78,7 +103,12 @@ impl QueryData for Entity {
         Ok(())
     }
 
-    unsafe fn fetch<'w>(_world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Entity> {
+    unsafe fn fetch<'w>(
+        _world: UnsafeWorldCell<'w>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> Option<Entity> {
         Some(entity)
     }
 }
@@ -98,8 +128,13 @@ macro_rules! impl_query_data_tuple {
                 Ok(())
             }
 
-            unsafe fn fetch<'w>(world: UnsafeWorldCell<'w>, entity: Entity) -> Option<Self::Item<'w>> {
-                Some(($(unsafe { $D::fetch(world, entity)? },)*))
+            unsafe fn fetch<'w>(
+                world: UnsafeWorldCell<'w>,
+                entity: Entity,
+                last_run: Tick,
+                this_run: Tick,
+            ) -> Option<Self::Item<'w>> {
+                Some(($(unsafe { $D::fetch(world, entity, last_run, this_run)? },)*))
             }
         }
 
@@ -118,7 +153,12 @@ pub trait QueryFilter {
 
     /// # Safety
     /// Access must have been validated.
-    unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool;
+    unsafe fn matches(
+        world: UnsafeWorldCell<'_>,
+        entity: Entity,
+        last_run: Tick,
+        this_run: Tick,
+    ) -> bool;
 }
 
 pub struct With<T>(PhantomData<T>);
@@ -128,7 +168,12 @@ impl<T: Component> QueryFilter for With<T> {
         Ok(())
     }
 
-    unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool {
+    unsafe fn matches(
+        world: UnsafeWorldCell<'_>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> bool {
         unsafe { world.world().get_component::<T>(entity).is_some() }
     }
 }
@@ -140,7 +185,12 @@ impl<T: Component> QueryFilter for Without<T> {
         Ok(())
     }
 
-    unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool {
+    unsafe fn matches(
+        world: UnsafeWorldCell<'_>,
+        entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> bool {
         unsafe { world.world().get_component::<T>(entity).is_none() }
     }
 }
@@ -150,8 +200,49 @@ impl QueryFilter for () {
         Ok(())
     }
 
-    unsafe fn matches(_world: UnsafeWorldCell<'_>, _entity: Entity) -> bool {
+    unsafe fn matches(
+        _world: UnsafeWorldCell<'_>,
+        _entity: Entity,
+        _last_run: Tick,
+        _this_run: Tick,
+    ) -> bool {
         true
+    }
+}
+
+pub struct Changed<T: Component>(PhantomData<fn() -> T>);
+
+impl<T: Component> QueryFilter for Changed<T> {
+    fn access(access: &mut Access) -> Result<(), AccessError> {
+        access.read::<T>()
+    }
+
+    unsafe fn matches(
+        world: UnsafeWorldCell<'_>,
+        entity: Entity,
+        last_run: Tick,
+        _this_run: Tick,
+    ) -> bool {
+        unsafe { world.world().components().get_ticks::<T>(entity.index()) }
+            .is_some_and(|t| t.changed.is_newer_than(last_run))
+    }
+}
+
+pub struct Added<T: Component>(PhantomData<fn() -> T>);
+
+impl<T: Component> QueryFilter for Added<T> {
+    fn access(access: &mut Access) -> Result<(), AccessError> {
+        access.read::<T>()
+    }
+
+    unsafe fn matches(
+        world: UnsafeWorldCell<'_>,
+        entity: Entity,
+        last_run: Tick,
+        _this_run: Tick,
+    ) -> bool {
+        unsafe { world.world().components().get_ticks::<T>(entity.index()) }
+            .is_some_and(|t| t.added.is_newer_than(last_run))
     }
 }
 
@@ -163,8 +254,8 @@ macro_rules! impl_query_filter_tuple {
                 Ok(())
             }
 
-            unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity) -> bool {
-                true $(&& unsafe { $F::matches(world, entity) })*
+            unsafe fn matches(world: UnsafeWorldCell<'_>, entity: Entity, last_run: Tick, this_run: Tick) -> bool {
+                true $(&& unsafe { $F::matches(world, entity, last_run, this_run) })*
             }
         }
     };
@@ -175,25 +266,27 @@ impl_query_filter_tuple!(F0, F1, F2);
 
 pub struct Query<'w, D: QueryData, F: QueryFilter = ()> {
     world: UnsafeWorldCell<'w>,
+    last_run: Tick,
+    this_run: Tick,
     marker: PhantomData<fn() -> (D, F)>,
 }
 
 impl<'w, D: QueryData, F: QueryFilter> Query<'w, D, F> {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = D::Item<'_>> {
-        let world = self.world;
+        let (world, last_run, this_run) = (self.world, self.last_run, self.this_run);
         let entities: Vec<Entity> = unsafe { world.world().entities().iter().collect() };
 
         entities
             .into_iter()
-            .filter(move |&entity| unsafe { F::matches(world, entity) })
-            .filter_map(move |entity| unsafe { D::fetch(world, entity) })
+            .filter(move |&e| unsafe { F::matches(world, e, last_run, this_run) })
+            .filter_map(move |e| unsafe { D::fetch(world, e, last_run, this_run) })
     }
 
     pub fn get(&mut self, entity: Entity) -> Option<D::Item<'_>> {
-        if !unsafe { F::matches(self.world, entity) } {
+        if !unsafe { F::matches(self.world, entity, self.last_run, self.this_run) } {
             return None;
         }
-        unsafe { D::fetch(self.world, entity) }
+        unsafe { D::fetch(self.world, entity, self.last_run, self.this_run) }
     }
 }
 
@@ -204,8 +297,12 @@ impl<'w, D: ReadOnlyQueryData, F: QueryFilter> Query<'w, D, F> {
 
         entities
             .into_iter()
-            .filter(move |&entity| unsafe { F::matches(world, entity) })
-            .filter_map(move |entity| unsafe { D::fetch(world, entity) })
+            .filter(move |&entity| unsafe {
+                F::matches(world, entity, self.last_run, self.this_run)
+            })
+            .filter_map(move |entity| unsafe {
+                D::fetch(world, entity, self.last_run, self.this_run)
+            })
     }
 }
 
@@ -223,10 +320,14 @@ impl<D: QueryData + 'static, F: QueryFilter + 'static> SystemParam for Query<'_,
 
     unsafe fn get_param<'w>(
         _state: &'w mut Self::State,
+        meta: &SystemMeta,
         world: UnsafeWorldCell<'w>,
+        this_run: Tick,
     ) -> Query<'w, D, F> {
         Query {
             world,
+            last_run: meta.last_run(),
+            this_run,
             marker: PhantomData,
         }
     }

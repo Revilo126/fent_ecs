@@ -9,7 +9,7 @@ use crate::{
         meta::SystemMeta,
         system_param::SystemParam,
     },
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
+    world::{World, change_detection::Tick, unsafe_world_cell::UnsafeWorldCell},
 };
 
 pub trait Command: Send + Sync + 'static {
@@ -119,7 +119,9 @@ impl SystemParam for Commands<'_> {
 
     unsafe fn get_param<'w>(
         state: &'w mut Self::State,
+        _meta: &SystemMeta,
         _world: UnsafeWorldCell<'w>,
+        _this_run: Tick,
     ) -> Commands<'w> {
         Commands { queue: state }
     }

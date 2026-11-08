@@ -1,6 +1,9 @@
+use crate::world::change_detection::Tick;
+
 pub struct SystemMeta {
     pub(crate) name: &'static str,
     pub(crate) thread_access: ThreadAccess,
+    pub(crate) last_run: Tick,
 }
 
 impl Default for SystemMeta {
@@ -8,6 +11,7 @@ impl Default for SystemMeta {
         Self {
             name: "System",
             thread_access: ThreadAccess::AnyThread,
+            last_run: Tick(0),
         }
     }
 }
@@ -17,6 +21,7 @@ impl SystemMeta {
         Self {
             name,
             thread_access: ThreadAccess::AnyThread,
+            last_run: Tick(0),
         }
     }
 
@@ -38,6 +43,11 @@ impl SystemMeta {
     #[inline]
     pub fn set_main_thread_only(&mut self) {
         self.thread_access = ThreadAccess::MainThread;
+    }
+
+    #[inline]
+    pub fn last_run(&self) -> Tick {
+        self.last_run
     }
 }
 

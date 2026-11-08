@@ -7,7 +7,7 @@ use crate::{
         meta::SystemMeta,
         system_param::{ParamItem, SystemParam},
     },
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
+    world::{World, change_detection::Tick, unsafe_world_cell::UnsafeWorldCell},
 };
 
 pub trait SystemParamFunction<Marker>: Send + Sync + 'static {
@@ -39,9 +39,13 @@ where
     }
 
     unsafe fn unsafe_run(&mut self, world: UnsafeWorldCell<'_>) {
+        let this_run = unsafe { world.world_mut().increment_change_tick() };
+
         let state = self.state.as_mut().expect("system not initialized");
-        let param = unsafe { F::Param::get_param(state, world) };
+        let param = unsafe { F::Param::get_param(state, &self.meta, world, this_run) };
         self.function.run(param);
+
+        self.meta.last_run = this_run;
     }
 
     fn run(&mut self, world: &mut World) {
@@ -97,11 +101,13 @@ macro_rules! impl_system_param_tuple {
 
             unsafe fn get_param<'w>(
                 state: &'w mut Self::State,
+                meta: &SystemMeta,
                 world: UnsafeWorldCell<'w>,
+                this_run: Tick,
             ) -> Self::Item<'w> {
                 let ($($P,)*) = state;
                 // SAFETY: caller guarantees access was validated.
-                unsafe { ($($P::get_param($P, world),)*) }
+                unsafe { ($($P::get_param($P, meta, world, this_run),)*) }
             }
 
             fn apply(state: &mut Self::State, world: &mut World) {

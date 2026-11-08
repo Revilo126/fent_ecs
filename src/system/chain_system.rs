@@ -6,7 +6,7 @@ use crate::{
         access::{Access, AccessError},
         meta::{SystemMeta, ThreadAccess::AnyThread},
     },
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
+    world::{World, change_detection::Tick, unsafe_world_cell::UnsafeWorldCell},
 };
 
 pub trait SystemTuple: Send + Sync + 'static {
@@ -95,6 +95,7 @@ pub trait IntoSystemTuple<Markers> {
             meta: SystemMeta {
                 name: "ChainedSystem",
                 thread_access: AnyThread,
+                last_run: Tick(0),
             },
         }
     }

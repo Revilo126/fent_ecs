@@ -2,7 +2,10 @@
 
 use std::any::Any;
 
-use crate::component::identification::component_id;
+use crate::{
+    component::{Component, identification::component_id},
+    world::change_detection::{ComponentTicks, Tick},
+};
 
 pub mod sparse_set;
 pub mod vec;
@@ -49,6 +52,7 @@ where
 #[derive(Default)]
 pub struct Components {
     pub(crate) storages: Vec<Option<Box<dyn ErasedComponentStorage>>>,
+    pub(crate) ticks: Vec<Vec<Option<ComponentTicks>>>,
 }
 
 impl Components {
@@ -126,5 +130,52 @@ impl Components {
             .as_mut()?
             .as_any_mut()
             .downcast_mut::<S>()
+    }
+
+    fn ticks_column(&mut self, id: usize) -> &mut Vec<Option<ComponentTicks>> {
+        if self.ticks.len() <= id {
+            self.ticks.resize_with(id + 1, Vec::new);
+        }
+        &mut self.ticks[id]
+    }
+
+    pub(crate) fn stamp_insert<C: Component>(&mut self, index: usize, tick: Tick) {
+        let col = self.ticks_column(component_id::<C>());
+        if col.len() <= index {
+            col.resize_with(index + 1, || None);
+        }
+        match &mut col[index] {
+            Some(t) => t.changed = tick,
+            empty => *empty = Some(ComponentTicks::new(tick)),
+        }
+    }
+
+    pub fn get_ticks<C: Component>(&self, index: usize) -> Option<&ComponentTicks> {
+        self.ticks.get(component_id::<C>())?.get(index)?.as_ref()
+    }
+
+    pub fn get_ticks_mut<C: Component>(&mut self, index: usize) -> Option<&mut ComponentTicks> {
+        self.ticks
+            .get_mut(component_id::<C>())?
+            .get_mut(index)?
+            .as_mut()
+    }
+
+    pub(crate) fn clear_ticks<C: Component>(&mut self, index: usize) {
+        if let Some(slot) = self
+            .ticks
+            .get_mut(component_id::<C>())
+            .and_then(|c| c.get_mut(index))
+        {
+            *slot = None;
+        }
+    }
+
+    pub(crate) fn clear_all_ticks(&mut self, index: usize) {
+        for col in &mut self.ticks {
+            if let Some(slot) = col.get_mut(index) {
+                *slot = None;
+            }
+        }
     }
 }

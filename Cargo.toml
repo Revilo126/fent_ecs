@@ -1,6 +1,6 @@
 [package]
 name = "fent_ecs"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 license = "MIT"
 authors = ["Revilo126"]
@@ -15,7 +15,7 @@ members = ["fent_derive"]
 
 [dependencies]
 # Internal
-fent_derive = { path = "fent_derive", version = "0.1.2" }
+fent_derive = { path = "fent_derive", version = "0.1.3" }
 
 # Threading
 rayon = "1.12.0"

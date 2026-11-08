@@ -7,7 +7,7 @@ use crate::{
         meta::SystemMeta,
         system_param::SystemParam,
     },
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
+    world::{World, change_detection::Tick, unsafe_world_cell::UnsafeWorldCell},
 };
 
 pub struct MessageWriter<'w, M: Message> {
@@ -41,7 +41,9 @@ impl<M: Message> SystemParam for MessageWriter<'_, M> {
 
     unsafe fn get_param<'w>(
         _state: &'w mut Self::State,
+        _meta: &SystemMeta,
         world: UnsafeWorldCell<'w>,
+        _this_run: Tick,
     ) -> Self::Item<'w> {
         let messages = unsafe { world.world_mut().get_mut_resource::<Messages<M>>() }
             .expect("Messages should have already existed");
@@ -88,7 +90,9 @@ impl<M: Message> SystemParam for MessageReader<'_, M> {
 
     unsafe fn get_param<'w>(
         state: &'w mut Self::State,
+        _meta: &SystemMeta,
         world: UnsafeWorldCell<'w>,
+        _this_run: Tick,
     ) -> Self::Item<'w> {
         let messages = unsafe { world.world().get_resource::<Messages<M>>() }
             .expect("Messages should have already existed");

@@ -11,6 +11,10 @@ pub struct UnsafeWorldCell<'world> {
 }
 
 impl<'world> UnsafeWorldCell<'world> {
+    /// # Safety
+    ///
+    /// This method does not do anything 'unsafe' by itself, but ensure all uses of the
+    /// [`UnsafeWorldCell`] are verified.
     #[inline]
     pub unsafe fn from_world(world: &'world mut World) -> Self {
         Self {
@@ -19,11 +23,18 @@ impl<'world> UnsafeWorldCell<'world> {
         }
     }
 
+    /// # Safety
+    ///
+    /// Ensure there is no Read-Write conficts that will exist once calling this,
+    /// If not done so unexplainable behaviour may occur.
     #[inline]
     pub unsafe fn world(&self) -> &'world World {
         unsafe { &*self.world }
     }
 
+    /// # Safety
+    ///
+    /// Ensure the use of the mutable [`World`] is correct within the assessed capabilities.
     #[inline]
     pub unsafe fn world_mut(&self) -> &'world mut World {
         unsafe { &mut *self.world }

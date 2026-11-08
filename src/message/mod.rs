@@ -1,24 +1,13 @@
 //! Messages module of fent_ecs
 
-use std::any::Any;
-
-use crate::component::resource::Resource;
+use fent_derive::Resource;
 
 /// Marker trait for Messages
 pub trait Message: Send + Sync + 'static {}
 
+#[derive(Resource)]
 pub struct Messages<M: Message> {
     pub(crate) queue: Vec<M>,
-}
-
-impl<T: Message> Resource for Messages<T> {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
 }
 
 impl<M: Message> Default for Messages<M> {

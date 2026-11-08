@@ -6,7 +6,7 @@ use crate::{
         meta::SystemMeta,
         system_param::SystemParam,
     },
-    world::World,
+    world::{World, change_detection::Tick},
 };
 
 pub struct NonSendMarker;
@@ -25,7 +25,9 @@ impl SystemParam for NonSendMarker {
 
     unsafe fn get_param<'w>(
         _state: &'w mut Self::State,
+        _meta: &SystemMeta,
         _world: crate::world::unsafe_world_cell::UnsafeWorldCell<'w>,
+        _this_run: Tick,
     ) -> Self::Item<'w> {
         NonSendMarker
     }

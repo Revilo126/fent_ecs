@@ -1,6 +1,6 @@
 //! Worlds are the object in charge of storing entities and components.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
 use crate::{
     component::{
@@ -15,36 +15,27 @@ use crate::{
         identification::event_id,
     },
     system::access::Access,
+    world::change_detection::Tick,
 };
 
-pub(crate) mod unsafe_world_cell;
+pub mod change_detection;
+pub mod unsafe_world_cell;
 
 /// The World struct containing all [`Entities`], [`Components`], [`Resources`] and other owned
 /// objects.
+#[derive(Default)]
 pub struct World {
-    /// To be able to identify a [`World`] within mass storages
     pub(crate) id: WorldId,
     pub(crate) entities: Entities,
     pub(crate) components: Components,
     pub(crate) resources: Resources,
     pub(crate) events: Events,
-}
-
-impl Default for World {
-    /// Returns a newly-created [`World`]
-    fn default() -> Self {
-        World {
-            id: WorldId::default(),
-            entities: Entities::default(),
-            components: Components::default(),
-            resources: Resources::default(),
-            events: Events::default(),
-        }
-    }
+    pub(crate) change_tick: AtomicU64,
 }
 
 impl World {
     /// Returns a newly-created [`World`]
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
@@ -138,9 +129,13 @@ impl World {
             return false;
         }
 
+        let index = entity.index();
+
         for storage in self.components.storages.iter_mut().flatten() {
-            storage.remove_untyped(entity.index());
+            storage.remove_untyped(index);
         }
+
+        self.components.clear_all_ticks(index);
 
         true
     }
@@ -163,10 +158,15 @@ impl World {
             entity
         );
 
+        let tick = self.increment_change_tick();
+        let index = entity.index();
+
         self.components
             .get_mut_or_insert::<T::Storage>()
             .unwrap()
-            .insert(entity.index(), component);
+            .insert(index, component);
+
+        self.components.stamp_insert::<T>(index, tick);
 
         T::on_add(entity, self);
     }
@@ -216,21 +216,16 @@ impl World {
             return;
         }
 
+        let index = entity.index();
+
         self.components
             .get_mut::<T::Storage>()
             .unwrap()
-            .remove(entity.index());
+            .remove(index);
+
+        self.components.clear_ticks::<T>(index);
 
         T::on_remove(entity, self);
-    }
-
-    /// Adds a [`Resource`] into the current [`World`]
-    #[inline]
-    pub fn add_resource<R>(&mut self, resource: R)
-    where
-        R: Resource,
-    {
-        self.resources.add(resource);
     }
 
     /// Inserts a [`Resource`] into the current [`World`]
@@ -239,7 +234,8 @@ impl World {
     where
         R: Resource,
     {
-        self.resources.insert(resource);
+        let tick = self.increment_change_tick();
+        self.resources.insert(resource, tick);
     }
 
     /// Returns a [`Resource`]
@@ -271,6 +267,7 @@ impl World {
         self.resources.remove::<R>();
     }
 
+    /// Sets an [`crate::event::handlers::EventHandler`] to run on an [`Event`]
     pub fn on<E: Event, M: 'static>(&mut self, handler: impl IntoEventHandler<E, M>) {
         let mut typed = TypedHandler::<E> {
             handler: Box::new(handler.into_event_handler()),
@@ -280,6 +277,7 @@ impl World {
         self.events.register(event_id::<E>(), Box::new(typed));
     }
 
+    /// Emit an [`Event`], running its [`crate::event::handlers::EventHandler`]'s
     pub fn emit<E: Event>(&mut self, event: E) {
         let id = event_id::<E>();
         let mut handlers = self.events.take(id);
@@ -290,6 +288,15 @@ impl World {
         }
 
         self.events.restore(id, handlers);
+    }
+
+    /// Returns the current change [`Tick`]
+    pub fn change_tick(&self) -> Tick {
+        Tick(self.change_tick.load(Ordering::Acquire))
+    }
+
+    pub(crate) fn increment_change_tick(&mut self) -> Tick {
+        Tick(self.change_tick.fetch_add(1, Ordering::AcqRel) + 1)
     }
 }
 

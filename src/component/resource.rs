@@ -5,7 +5,13 @@
 
 use std::any::Any;
 
-use crate::{component::identification::resource_id, world::World};
+use crate::{
+    component::identification::resource_id,
+    world::{
+        World,
+        change_detection::{ComponentTicks, Tick},
+    },
+};
 
 // Resource trait
 pub trait Resource: Send + Sync + Any {
@@ -33,13 +39,15 @@ type ResourceAction = fn(&mut dyn Resource, &mut World);
 #[derive(Default)]
 pub struct Resources {
     pub(crate) resources: Vec<Option<Box<dyn Resource>>>,
+    pub(crate) ticks: Vec<Option<ComponentTicks>>,
 }
 
 impl Resources {
-    /// Adds a [`Resource`], if one is already existing it doesn't do anything.
+    /// Insert a [`Resource`] into the storage.
     ///
-    /// Might remove idk tho
-    pub fn add<R>(&mut self, resource: R)
+    /// When a [`Resource`] of the same type already exists
+    /// it does not do anything.
+    pub fn insert<R>(&mut self, resource: R, tick: Tick)
     where
         R: Resource + 'static,
     {
@@ -47,27 +55,14 @@ impl Resources {
 
         if self.resources.len() <= id {
             self.resources.resize_with(id + 1, || None);
+            self.ticks.resize_with(id + 1, || None);
         }
 
-        if self.resources[id].is_none() {
-            self.resources[id] = Some(Box::new(resource));
-        }
-    }
+        self.resources[id] = Some(Box::new(resource));
 
-    /// Insert a [`Resource`]
-    pub fn insert<R>(&mut self, resource: R)
-    where
-        R: Resource + 'static,
-    {
-        let id = resource_id::<R>();
-
-        if self.resources.len() <= id {
-            self.resources.resize_with(id + 1, || None);
-        }
-
-        // TODO: Make it override what was there
-        if self.resources[id].is_none() {
-            self.resources[id] = Some(Box::new(resource));
+        match &mut self.ticks[id] {
+            Some(t) => t.changed = tick,
+            empty => *empty = Some(ComponentTicks::new(tick)),
         }
     }
 
@@ -102,9 +97,37 @@ impl Resources {
         R: Resource + 'static,
     {
         let id = resource_id::<R>();
-
-        if let Some(resource) = self.resources.get_mut(id) {
-            *resource = None;
+        if let Some(v) = self.resources.get_mut(id) {
+            *v = None;
         }
+        if let Some(t) = self.ticks.get_mut(id) {
+            *t = None;
+        }
+    }
+
+    pub(crate) fn get_mut_with_ticks<R: Resource>(
+        &mut self,
+    ) -> Option<(&mut R, &mut ComponentTicks)> {
+        let id = resource_id::<R>();
+        let Resources { resources, ticks } = self;
+        let value = resources
+            .get_mut(id)?
+            .as_mut()?
+            .as_any_mut()
+            .downcast_mut::<R>()?;
+        let ticks = ticks.get_mut(id)?.as_mut()?;
+        Some((value, ticks))
+    }
+
+    pub(crate) fn get_with_ticks<R: Resource>(&self) -> Option<(&R, &ComponentTicks)> {
+        let id = resource_id::<R>();
+        Some((
+            self.resources
+                .get(id)?
+                .as_ref()?
+                .as_any()
+                .downcast_ref::<R>()?,
+            self.ticks.get(id)?.as_ref()?,
+        ))
     }
 }

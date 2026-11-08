@@ -30,6 +30,7 @@ where
         FunctionEventHandler {
             function: self,
             state: None,
+            meta: SystemMeta::new("EventHandler"),
             marker: PhantomData,
         }
     }
@@ -42,6 +43,7 @@ where
 {
     function: F,
     state: Option<<F::Param as SystemParam>::State>,
+    meta: SystemMeta,
     marker: PhantomData<fn(&E) -> Marker>,
 }
 
@@ -52,7 +54,7 @@ where
     Marker: 'static,
 {
     fn initialize(&mut self, world: &mut World) {
-        self.state = Some(F::Param::init_state(world, &mut SystemMeta::default()));
+        self.state = Some(F::Param::init_state(world, &mut self.meta));
     }
 
     fn access(&self, access: &mut Access) -> Result<(), AccessError> {
@@ -73,7 +75,11 @@ where
             .state
             .as_mut()
             .expect("Event handler was not initialized!");
-        let param = unsafe { F::Param::get_param(state, world) };
+
+        let this_run = unsafe { world.world_mut() }.increment_change_tick();
+
+        let param = unsafe { F::Param::get_param(state, &self.meta, world, this_run) };
+
         self.function.run(event, param);
     }
 

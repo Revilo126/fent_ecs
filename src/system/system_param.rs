@@ -5,7 +5,7 @@ use crate::{
         access::{Access, AccessError},
         meta::SystemMeta,
     },
-    world::{World, unsafe_world_cell::UnsafeWorldCell},
+    world::{World, change_detection::Tick, unsafe_world_cell::UnsafeWorldCell},
 };
 
 pub trait SystemParam {
@@ -19,7 +19,9 @@ pub trait SystemParam {
     /// Access must have been validated, and no conflicting access may be live.
     unsafe fn get_param<'w>(
         state: &'w mut Self::State,
+        meta: &SystemMeta,
         world: UnsafeWorldCell<'w>,
+        this_run: Tick,
     ) -> Self::Item<'w>;
 
     /// Called after the [`crate::system::System`] runs.
